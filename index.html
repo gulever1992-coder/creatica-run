@@ -171,7 +171,7 @@ const ART_N = 11;
 /* ---------- ассеты ---------- */
 const ASSET = {}, HERO = { run:[], jump:null, fall:null, rect:null };
 const files = ['box','vacuum','cat','blocks','coin','star','pillow','wetsign','plant','ball','drone','balloons','skate',
-  'sofa_cream','sofa_blue','sofa_terracotta','sofa_n1','sofa_n2','sofa_n3','sofa_n4','sofa_n5','sofa_n6','sofa_n7','sofa_n8','sofa_n9','sofa_n10','sofa_n11','sofa_n12','armchair','pouf','chair_wing','chair_blue','chair_green','bed','table_oval','dresser','stand','bench'];
+  'sofa_cream','sofa_blue','sofa_terracotta','sofa_n1','sofa_n2','sofa_n3','sofa_n4','sofa_n5','sofa_n6','sofa_n7','sofa_n8','sofa_n9','sofa_n10','sofa_n11','sofa_n12','armchair','arm1','arm2','arm3','arm4','arm5','arm6','arm7','arm8','pouf','chair_wing','chair_blue','bed','table_oval','dresser','stand','bench'];
 const heroFiles = ['hr1','hr2','hr3','hr4','hr5','hr6','hjump','hfall'];
 const loadImg = src => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
 function pixels(img){ const c=document.createElement('canvas'); c.width=img.width; c.height=img.height; const x=c.getContext('2d'); x.drawImage(img,0,0); return {c,x,d:x.getImageData(0,0,c.width,c.height).data}; }
@@ -272,12 +272,13 @@ const TYPES = {
   drone:{img:'drone',h:52,kind:'air',bottom:92,move:40}, balloons:{img:'balloons',h:80,kind:'air',bottom:90},
   sofa_n1:{img:'sofa_n1',h:64,kind:'plat'}, sofa_n2:{img:'sofa_n2',h:62,kind:'plat'}, sofa_n3:{img:'sofa_n3',h:64,kind:'plat'}, sofa_n4:{img:'sofa_n4',h:66,kind:'plat'}, sofa_n5:{img:'sofa_n5',h:62,kind:'plat'}, sofa_n6:{img:'sofa_n6',h:64,kind:'plat'}, sofa_n7:{img:'sofa_n7',h:62,kind:'plat'}, sofa_n8:{img:'sofa_n8',h:64,kind:'plat'}, sofa_n9:{img:'sofa_n9',h:64,kind:'plat'}, sofa_n10:{img:'sofa_n10',h:64,kind:'plat'}, sofa_n11:{img:'sofa_n11',h:62,kind:'plat'}, sofa_n12:{img:'sofa_n12',h:64,kind:'plat'},
   sofa_cream:{img:'sofa_cream',h:64,kind:'plat'}, sofa_blue:{img:'sofa_blue',h:66,kind:'plat'}, sofa_terracotta:{img:'sofa_terracotta',h:62,kind:'plat'},
+  arm1:{img:'arm1',h:66,kind:'plat'}, arm2:{img:'arm2',h:68,kind:'plat'}, arm3:{img:'arm3',h:68,kind:'plat'}, arm4:{img:'arm4',h:72,kind:'plat'}, arm5:{img:'arm5',h:72,kind:'plat'}, arm6:{img:'arm6',h:68,kind:'plat'}, arm7:{img:'arm7',h:84,kind:'plat'}, arm8:{img:'arm8',h:84,kind:'plat'},
   armchair:{img:'armchair',h:64,kind:'plat'}, pouf:{img:'pouf',h:38,kind:'plat'}, chair_wing:{img:'chair_wing',h:88,kind:'plat'},
-  chair_blue:{img:'chair_blue',h:72,kind:'plat'}, chair_green:{img:'chair_green',h:72,kind:'plat'}, bed:{img:'bed',h:64,kind:'plat'},
+  chair_blue:{img:'chair_blue',h:72,kind:'plat'}, bed:{img:'bed',h:64,kind:'plat'},
   table_oval:{img:'table_oval',h:42,kind:'plat'}, dresser:{img:'dresser',h:76,kind:'plat'}, stand:{img:'stand',h:62,kind:'plat'}, bench:{img:'bench',h:40,kind:'plat'}
 };
 const SOFAS = ['sofa_cream','sofa_blue','sofa_terracotta','sofa_n1','sofa_n2','sofa_n3','sofa_n4','sofa_n5','sofa_n6','sofa_n7','sofa_n8','sofa_n9','sofa_n10','sofa_n11','sofa_n12','bed','table_oval'];
-const SEATS = ['armchair','chair_wing','chair_blue','chair_green','dresser','stand'];
+const SEATS = ['armchair','arm1','arm2','arm3','arm4','arm5','arm6','arm7','arm8','chair_wing','chair_blue','dresser','stand'];
 const LOW   = ['pouf','bench','table_oval'];
 
 function mkObs(type,x){
@@ -296,7 +297,7 @@ function spawn(){
   const L=level(), x=nextX; let width=60;
   const pool=[];
   const add=(n,f)=>{ for(let i=0;i<n;i++) pool.push(f); };
-  add(3,'single'); add(2,'plat'); add(2,'sofa'); add(1,'steps'); add(1,'coins');
+  add(3,'single'); add(2,'plat'); add(2,'sofa'); add(2,'seat'); add(1,'steps'); add(1,'coins');
   if(L>.05) add(2,'blocks');
   if(L>.08) add(2,'air');
   if(L>.15) add(2,'moving');
@@ -316,6 +317,9 @@ function spawn(){
   } else if(kind==='sofa'){
     const o=mkObs(pick(SOFAS.slice(0,15)),x); width=o.w;
     coinRow(x+14,o.h*.82+24,Math.max(2,Math.floor(o.w/36)-1));
+  } else if(kind==='seat'){
+    const o=mkObs(pick(SEATS),x); width=o.w;
+    coinRow(x+10,o.h*.82+24,Math.max(2,Math.floor(o.w/36)));
   } else if(kind==='steps'){
     const a=mkObs(pick(LOW),x), b=mkObs(pick(SEATS.concat(SOFAS)),x+a.w+rnd(20,44));
     width=a.w+b.w+44; coinArc(x+a.w-10,4,110,32); coinRow(b.x+8,b.h*.82+24,2);
