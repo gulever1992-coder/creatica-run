@@ -24,6 +24,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(239,217,198,.55);backdrop-filter:blur(5px)}
 .screen.on{display:flex}
 .card{width:100%;max-width:400px;background:var(--cream);border:1px solid var(--line);border-radius:22px;padding:24px 22px;text-align:center;box-shadow:0 18px 50px rgba(80,40,10,.18);max-height:100%;overflow:auto}
+.logo{display:block;height:60px;margin:-6px auto -4px}
 .brand{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;letter-spacing:.28em;font-size:17px}
 .brand i{display:inline-block;width:22px;height:22px;border:2.5px solid var(--ink);border-radius:5px;position:relative}
 .brand i:after{content:"";position:absolute;inset:4px;border:2.5px solid var(--ink);border-right-color:transparent;border-radius:50%}
@@ -47,6 +48,44 @@ button,.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600
 .note{font-size:12px;color:#7a7a7a;margin-top:10px}
 #toast{position:fixed;left:0;right:0;top:34%;text-align:center;font-size:26px;font-weight:700;color:var(--ink);text-shadow:0 2px 0 #fff;opacity:0;pointer-events:none;transition:opacity .3s}
 #rot{display:none}
+
+/* ---- горизонтальный экран телефона (портрет не затрагивается) ---- */
+@media (orientation:landscape) and (max-height:600px){
+  #hud{padding:calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 12px) 0 calc(env(safe-area-inset-left) + 12px)}
+  .pill{padding:4px 11px;font-size:13px}
+  #score{font-size:18px;padding:4px 14px}
+  #hearts{font-size:16px}
+  #mute{width:32px;height:32px;font-size:15px}
+  #meter{max-width:min(44vw,360px);margin:6px auto 0;padding:5px 10px;border-radius:11px}
+  #meter .lbl{font-size:11px;margin-bottom:4px}
+  #meter .bar{height:6px}
+  #toast{top:42%;font-size:22px}
+  .screen{padding:8px calc(env(safe-area-inset-right) + 10px) 8px calc(env(safe-area-inset-left) + 10px)}
+  .card{max-width:640px;padding:12px 18px;border-radius:18px}
+  .logo{height:40px;margin:-6px auto -6px}
+  h1{font-size:20px;margin:8px 0 4px}
+  .card>p{display:none}
+  .how{grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 8px}
+  .how div{padding:6px 7px;font-size:10.5px}
+  .how b{font-size:11px}
+  .tiers{margin:0 0 8px;gap:4px}
+  .tiers span{font-size:10.5px;padding:2px 7px}
+  button,.btn{padding:11px 14px;font-size:15px;border-radius:12px}
+  .ghost{margin-top:0}
+  #over .card{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;align-items:center;text-align:center}
+  #over .logo{grid-column:1/3;margin-bottom:2px}
+  #over .big{font-size:34px;margin:0;grid-column:1}
+  #over .sub{margin:0 0 6px;grid-column:1}
+  #over #oPromo{grid-column:2;grid-row:2/5}
+  #over #oPromo p{font-size:12px;margin:4px 0 0}
+  #over #againBtn{grid-column:1;margin-top:4px}
+  #over .ghost{grid-column:1;margin-top:8px}
+  #over .note{grid-column:1/3;margin-top:6px;font-size:10.5px}
+  .promo{margin:0;padding:8px}
+  .promo .code{font-size:22px;margin:2px 0 6px}
+  .promo button{padding:8px;font-size:13px}
+  .note{margin-top:6px;font-size:10.5px}
+}
 </style>
 </head>
 <body>
@@ -70,7 +109,7 @@ button,.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600
 
 <div class="screen on" id="start">
   <div class="card">
-    <div class="brand"><i></i>CREATICA</div>
+    <img class="logo" src="assets/logo.svg" alt="CREATICA">
     <h1>Беги за скидкой!</h1>
     <p>Пробегай шоурумы Creatica, собирай монеты и не задень препятствия. Скидка не даётся просто так: чем дальше и точнее пробежишь — тем больше промокод.</p>
     <div class="how">
@@ -87,7 +126,7 @@ button,.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600
 
 <div class="screen" id="over">
   <div class="card">
-    <div class="brand"><i></i>CREATICA</div>
+    <img class="logo" src="assets/logo.svg" alt="CREATICA">
     <div class="big" id="oScore">0</div>
     <div class="sub" id="oSub">очков · рекорд 0</div>
     <div id="oPromo"></div>
@@ -132,7 +171,7 @@ const ART_N = 11;
 /* ---------- ассеты ---------- */
 const ASSET = {}, HERO = { run:[], jump:null, fall:null, rect:null };
 const files = ['box','vacuum','cat','blocks','coin','star','pillow','wetsign','plant','ball','drone','balloons','skate',
-  'sofa_cream','sofa_blue','sofa_terracotta','armchair','pouf','chair_wing','chair_blue','chair_green','bed','table_oval','dresser','stand','bench'];
+  'sofa_cream','sofa_blue','sofa_terracotta','sofa_n1','sofa_n2','sofa_n3','sofa_n4','sofa_n5','sofa_n6','sofa_n7','sofa_n8','sofa_n9','sofa_n10','sofa_n11','sofa_n12','armchair','pouf','chair_wing','chair_blue','chair_green','bed','table_oval','dresser','stand','bench'];
 const heroFiles = ['hr1','hr2','hr3','hr4','hr5','hr6','hjump','hfall'];
 const loadImg = src => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
 function pixels(img){ const c=document.createElement('canvas'); c.width=img.width; c.height=img.height; const x=c.getContext('2d'); x.drawImage(img,0,0); return {c,x,d:x.getImageData(0,0,c.width,c.height).data}; }
@@ -231,12 +270,13 @@ const TYPES = {
   blocks:{img:'blocks',h:108,kind:'hurt'},
   vacuum:{img:'vacuum',h:30,kind:'hurt',move:70}, ball:{img:'ball',h:46,kind:'hurt',move:110}, skate:{img:'skate',h:24,kind:'hurt',move:150},
   drone:{img:'drone',h:52,kind:'air',bottom:92,move:40}, balloons:{img:'balloons',h:80,kind:'air',bottom:90},
+  sofa_n1:{img:'sofa_n1',h:64,kind:'plat'}, sofa_n2:{img:'sofa_n2',h:62,kind:'plat'}, sofa_n3:{img:'sofa_n3',h:64,kind:'plat'}, sofa_n4:{img:'sofa_n4',h:66,kind:'plat'}, sofa_n5:{img:'sofa_n5',h:62,kind:'plat'}, sofa_n6:{img:'sofa_n6',h:64,kind:'plat'}, sofa_n7:{img:'sofa_n7',h:62,kind:'plat'}, sofa_n8:{img:'sofa_n8',h:64,kind:'plat'}, sofa_n9:{img:'sofa_n9',h:64,kind:'plat'}, sofa_n10:{img:'sofa_n10',h:64,kind:'plat'}, sofa_n11:{img:'sofa_n11',h:62,kind:'plat'}, sofa_n12:{img:'sofa_n12',h:64,kind:'plat'},
   sofa_cream:{img:'sofa_cream',h:64,kind:'plat'}, sofa_blue:{img:'sofa_blue',h:66,kind:'plat'}, sofa_terracotta:{img:'sofa_terracotta',h:62,kind:'plat'},
   armchair:{img:'armchair',h:64,kind:'plat'}, pouf:{img:'pouf',h:38,kind:'plat'}, chair_wing:{img:'chair_wing',h:88,kind:'plat'},
   chair_blue:{img:'chair_blue',h:72,kind:'plat'}, chair_green:{img:'chair_green',h:72,kind:'plat'}, bed:{img:'bed',h:64,kind:'plat'},
   table_oval:{img:'table_oval',h:42,kind:'plat'}, dresser:{img:'dresser',h:76,kind:'plat'}, stand:{img:'stand',h:62,kind:'plat'}, bench:{img:'bench',h:40,kind:'plat'}
 };
-const SOFAS = ['sofa_cream','sofa_blue','sofa_terracotta','bed','table_oval'];
+const SOFAS = ['sofa_cream','sofa_blue','sofa_terracotta','sofa_n1','sofa_n2','sofa_n3','sofa_n4','sofa_n5','sofa_n6','sofa_n7','sofa_n8','sofa_n9','sofa_n10','sofa_n11','sofa_n12','bed','table_oval'];
 const SEATS = ['armchair','chair_wing','chair_blue','chair_green','dresser','stand'];
 const LOW   = ['pouf','bench','table_oval'];
 
@@ -256,7 +296,7 @@ function spawn(){
   const L=level(), x=nextX; let width=60;
   const pool=[];
   const add=(n,f)=>{ for(let i=0;i<n;i++) pool.push(f); };
-  add(3,'single'); add(2,'plat'); add(1,'steps'); add(1,'coins');
+  add(3,'single'); add(2,'plat'); add(2,'sofa'); add(1,'steps'); add(1,'coins');
   if(L>.05) add(2,'blocks');
   if(L>.08) add(2,'air');
   if(L>.15) add(2,'moving');
@@ -272,6 +312,9 @@ function spawn(){
     const o=mkObs('blocks',x); width=o.w; coinArc(x+o.w/2-70,5,175);
   } else if(kind==='plat'){
     const o=mkObs(pick(SOFAS.concat(SEATS)),x); width=o.w;
+    coinRow(x+14,o.h*.82+24,Math.max(2,Math.floor(o.w/36)-1));
+  } else if(kind==='sofa'){
+    const o=mkObs(pick(SOFAS.slice(0,15)),x); width=o.w;
     coinRow(x+14,o.h*.82+24,Math.max(2,Math.floor(o.w/36)-1));
   } else if(kind==='steps'){
     const a=mkObs(pick(LOW),x), b=mkObs(pick(SEATS.concat(SOFAS)),x+a.w+rnd(20,44));
