@@ -8,8 +8,8 @@
 <style>
 :root{--peach:#E9C9B1;--cream:#F7EFE6;--ink:#141414;--accent:#D9825B;--line:rgba(20,20,20,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-html,body{margin:0;height:100%;overflow:hidden;background:#EFD9C6;color:var(--ink);font-family:"Hoves","Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+html,body{margin:0;height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;background:#EFD9C6;color:var(--ink);font-family:"Hoves","Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 14px 0;pointer-events:none;display:none}
 #hud .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .pill{background:rgba(255,255,255,.82);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:15px;letter-spacing:.02em}
@@ -112,7 +112,7 @@ const CONFIG = {
   ],
   lives: 2,
   // сложность: стартовая скорость, прирост в сек, максимум (единиц мира в секунду)
-  speed0: 290, speedGain: 3.4, speedMax: 610
+  speed0: 250, speedGain: 2.9, speedMax: 520
 };
 /* =================================================== */
 
@@ -437,7 +437,7 @@ function drawBackground(){
   const B=BGS[bgIdx], bg=B.img;
   ctx.fillStyle=B.bot; ctx.fillRect(0,0,W,H);
   if(!bg){ ctx.fillStyle=B.top; ctx.fillRect(0,0,W,GY); return; }
-  const bh=Math.min(GY/B.feet,520), bw=bg.width/bg.height*bh, top=GY-B.feet*bh, base=camX*.35;
+  const bh=GY/B.feet, bw=bg.width/bg.height*bh, top=GY-B.feet*bh, base=camX*.35;
   ctx.fillStyle=B.top; ctx.fillRect(0,0,W,top+bh*.5);
   const k0=Math.floor(base/bw);
   for(let k=k0;k*bw-base<W;k++){
@@ -501,7 +501,7 @@ function render(){
   const blink = inv>0 && Math.floor(inv*12)%2===0;
   const hf=heroFrame();
   if(!blink && hf){
-    const HH=96, w=hf.width/hf.height*HH;
+    const HH=100, w=hf.width/hf.height*HH;
     ctx.save(); ctx.translate(P.x,GY-P.y);
     if(P.air) ctx.rotate(Math.max(-.25,Math.min(.25,-P.vy/2600)));
     else ctx.translate(0,Math.abs(Math.sin(runAnim*Math.PI/3))*-2);
@@ -520,11 +520,13 @@ function render(){
 /* ---------- цикл / размер ---------- */
 function resize(){
   DPR=Math.min(2.5,window.devicePixelRatio||1);
-  const w=innerWidth,h=innerHeight;
+  const vv=window.visualViewport, w=Math.round(vv?vv.width:innerWidth), h=Math.round(vv?vv.height:innerHeight);
+  cv.style.width=w+"px"; cv.style.height=h+"px";
   cv.width=Math.round(w*DPR); cv.height=Math.round(h*DPR);
-  S=Math.min(w/400,h/380); W=w/S; H=h/S; GY=h>w?H*.76:H*.8;
+  S=Math.min(w/300,h/340); W=w/S; H=h/S; GY=h>w?H*.80:H*.82;
   P.x=W*.2; if(state!=='play') render();
 }
+if(window.visualViewport) visualViewport.addEventListener('resize',resize);
 addEventListener('resize',resize); addEventListener('orientationchange',()=>setTimeout(resize,200));
 let last=0;
 function loop(ts){
