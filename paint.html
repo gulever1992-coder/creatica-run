@@ -373,6 +373,7 @@ async function makeResult(){
 }
 $('done').onclick=async ()=>{
   if(!M) return; const u=usedInfo(); if(!u.up && !u.legs){ toast('Сначала покрась хотя бы одну часть'); return; }
+  try{ localStorage.setItem('cc_done',(+localStorage.getItem('cc_done')||0)+1); }catch(e){}
   const r=await makeResult(); resBlob=r.blob; $('resImg').src=r.url;
   const m=MODELS[modelIdx]; $('shopBtn').href=m.url; $('shopBtn').textContent='Смотреть «'+m.name.replace(/^(Диван|Кресло) /,'')+'» на сайте';
   $('resText').textContent = u.fabs.length? ('Ткани: '+u.fabs.map(f=>f.n).join(', ')+'.') : 'Отличное сочетание!';
