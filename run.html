@@ -119,7 +119,7 @@ button,.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600
     <div class="how">
       <div><b>👆 Тап — прыжок</b>Тап в воздухе — двойной прыжок</div>
       <div><b>🛋 Мебель — платформы</b>Диваны, кресла, комоды: запрыгивай сверху</div>
-      <div><b>🚁 Летающие — не прыгай!</b>Дроны и шарики: пробегай снизу</div>
+      <div><b>🦜 Летающие — не прыгай!</b>Попугаи и шарики: пробегай снизу</div>
       <div><b>♥♥♥ Три жизни</b>+1 жизнь за 45 с без ударов. Подушка спасёт от удара</div>
     </div>
     <div class="tiers" id="tiersList"></div>
@@ -175,7 +175,7 @@ const ART_N = 11;
 
 /* ---------- ассеты ---------- */
 const ASSET = {}, HERO = { run:[], jump:null, fall:null, rect:null };
-const files = ['box','vacuum','cat','blocks','coin','star','pillow','wetsign','plant','ball','drone','balloons','skate',
+const files = ['box','vacuum','cat','blocks','coin','star','pillow','wetsign','plant','ball','parrot1','parrot2','balloons','skate',
   'sofa_cream','sofa_blue','sofa_terracotta','sofa_n1','sofa_n2','sofa_n3','sofa_n4','sofa_n5','sofa_n6','sofa_n7','sofa_n8','sofa_n9','sofa_n10','sofa_n11','sofa_n12','armchair','arm1','arm2','arm3','arm4','arm5','arm6','arm7','arm8','pouf','chair_wing','chair_blue','bed','table_oval','dresser','stand','bench'];
 const heroFiles = ['hr1','hr2','hr3','hr4','hr5','hr6','hjump','hfall'];
 let READY=false, TOTAL=0, DONE=0, FAILED=0;
@@ -197,7 +197,7 @@ function mean(d,w,px,py){ const i=(py*w+px)*4; return 'rgb('+d[i]+','+d[i+1]+','
 
 async function loadAll(){
   TOTAL=files.length+heroFiles.length+BGS.length+ART_N;
-  await Promise.all(files.map(async n => { const im = await loadImg('assets/'+n+'.webp'); ASSET[n] = im ? trim(im) : null; }));
+  await Promise.all(files.map(async n => { const im = await loadImg('assets/'+n+'.webp'); ASSET[n] = im ? (n.indexOf('parrot')===0 ? im : trim(im)) : null; }));
   // герой: единая рамка для всех кадров, чтобы анимация не «прыгала»
   const hi = await Promise.all(heroFiles.map(n => loadImg('assets/'+n+'.webp')));
   const ps = hi.map(im => im ? pixels(im) : null);
@@ -283,7 +283,7 @@ const TYPES = {
   box:{img:'box',h:50,kind:'hurt'}, cat:{img:'cat',h:56,kind:'hurt'}, wetsign:{img:'wetsign',h:62,kind:'hurt'}, plant:{img:'plant',h:74,kind:'hurt'},
   blocks:{img:'blocks',h:108,kind:'hurt'},
   vacuum:{img:'vacuum',h:30,kind:'hurt',move:70}, ball:{img:'ball',h:46,kind:'hurt',move:110}, skate:{img:'skate',h:24,kind:'hurt',move:150},
-  drone:{img:'drone',h:52,kind:'air',bottom:92,move:40}, balloons:{img:'balloons',h:80,kind:'air',bottom:90},
+  parrot:{img:'parrot1',h:58,kind:'air',bottom:92,move:60}, balloons:{img:'balloons',h:80,kind:'air',bottom:90},
   sofa_n1:{img:'sofa_n1',h:64,kind:'plat'}, sofa_n2:{img:'sofa_n2',h:62,kind:'plat'}, sofa_n3:{img:'sofa_n3',h:64,kind:'plat'}, sofa_n4:{img:'sofa_n4',h:66,kind:'plat'}, sofa_n5:{img:'sofa_n5',h:62,kind:'plat'}, sofa_n6:{img:'sofa_n6',h:64,kind:'plat'}, sofa_n7:{img:'sofa_n7',h:62,kind:'plat'}, sofa_n8:{img:'sofa_n8',h:64,kind:'plat'}, sofa_n9:{img:'sofa_n9',h:64,kind:'plat'}, sofa_n10:{img:'sofa_n10',h:64,kind:'plat'}, sofa_n11:{img:'sofa_n11',h:62,kind:'plat'}, sofa_n12:{img:'sofa_n12',h:64,kind:'plat'},
   sofa_cream:{img:'sofa_cream',h:64,kind:'plat'}, sofa_blue:{img:'sofa_blue',h:66,kind:'plat'}, sofa_terracotta:{img:'sofa_terracotta',h:62,kind:'plat'},
   arm1:{img:'arm1',h:66,kind:'plat'}, arm2:{img:'arm2',h:68,kind:'plat'}, arm3:{img:'arm3',h:68,kind:'plat'}, arm4:{img:'arm4',h:72,kind:'plat'}, arm5:{img:'arm5',h:72,kind:'plat'}, arm6:{img:'arm6',h:68,kind:'plat'}, arm7:{img:'arm7',h:84,kind:'plat'}, arm8:{img:'arm8',h:84,kind:'plat'},
@@ -338,7 +338,7 @@ function spawn(){
     const a=mkObs(pick(LOW),x), b=mkObs(pick(SEATS.concat(SOFAS)),x+a.w+rnd(20,44));
     width=a.w+b.w+44; coinArc(x+a.w-10,4,110,32); coinRow(b.x+8,b.h*.82+24,2);
   } else if(kind==='air'){
-    const o=mkObs(pick(['drone','balloons']),x); width=o.w+20;
+    const o=mkObs(pick(['parrot','balloons']),x); width=o.w+20;
     coinRow(x-10,26,Math.max(3,Math.floor(o.w/30)+1),30);   // монеты внизу — не прыгай!
   } else if(kind==='moving'){
     const o=mkObs(pick(['vacuum','ball','skate']),x+rnd(0,60)); width=o.w+90; coinArc(x+20,4,90);
@@ -349,7 +349,7 @@ function spawn(){
     const a=mkObs('box',x), b=mkObs(pick(['cat','wetsign']),x+a.w+speed*rnd(.5,.6)), c=mkObs(pick(['box','plant']),b.x+b.w+speed*rnd(.5,.6));
     width=c.x+c.w-x;
   } else if(kind==='airmix'){
-    const a=mkObs('box',x), b=mkObs(pick(['drone','balloons']),x+a.w+speed*rnd(.6,.72));
+    const a=mkObs('box',x), b=mkObs(pick(['parrot','balloons']),x+a.w+speed*rnd(.6,.72));
     width=a.w+b.w+speed*.72; coinArc(x+a.w/2-30,5,95);
   } else { coinArc(x,6,70); width=200; }
 
@@ -554,7 +554,7 @@ function render(){
     ctx.fillStyle='rgba(90,50,20,.16)'; ctx.beginPath(); ctx.ellipse(sx+o.w/2,GY+2,o.w*.44,o.bottom?4:6,0,0,7); ctx.fill();
     const im=ASSET[o.T.img]; if(im){
       if(o.type==='ball'){ ctx.save(); ctx.translate(sx+o.w/2,yb-o.h/2); ctx.rotate(-(camX+o.dx*-1)/22); ctx.drawImage(im,-o.w/2,-o.h/2,o.w,o.h); ctx.restore(); }
-      else if(o.T.kind==='air'){ ctx.drawImage(im,sx,yb-o.h+Math.sin(tm*3+o.x)*3,o.w,o.h); }
+      else if(o.T.kind==='air'){ const fim=o.type==='parrot'?ASSET[(Math.floor(tm*8+o.x*.013)&1)?'parrot2':'parrot1']:im; ctx.drawImage(fim,sx,yb-o.h+Math.sin(tm*3+o.x)*3,o.w,o.h); }
       else ctx.drawImage(im,sx,yb-o.h,o.w,o.h);
     }
   }
