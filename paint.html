@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#F6EEE6">
+<title>Creatica Colors — раскрась мебель</title>
+<style>
+:root{--peach:#E9C9B1;--cream:#F7EFE6;--ink:#141414;--accent:#D9825B;--line:rgba(20,20,20,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;background:#F6EEE6;color:var(--ink);font-family:"Hoves","Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 8px) 12px calc(env(safe-area-inset-bottom) + 10px);gap:8px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none}
+.top .home{width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;text-decoration:none;color:var(--ink)}
+.top img{height:38px}
+.top .tools{display:flex;gap:6px}
+.tool{height:38px;min-width:38px;padding:0 12px;border-radius:19px;background:#fff;border:1px solid var(--line);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px}
+.tool:disabled{opacity:.35}
+.tool:active{transform:scale(.96)}
+.pick{display:flex;flex-direction:column;gap:8px;flex:none;min-width:0}
+.tabs{display:flex;gap:6px;flex:none}
+.tab{flex:1;height:34px;border-radius:17px;font-weight:600;font-size:13px;background:rgba(255,255,255,.6);border:1px solid var(--line)}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.models{display:flex;gap:8px;overflow-x:auto;flex:none;padding:2px 0;scrollbar-width:none}
+.models::-webkit-scrollbar{display:none}
+.mchip{flex:none;width:96px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:4px 4px 6px;text-align:center;font-size:11px;font-weight:600;line-height:1.15}
+.mchip canvas,.mchip img{width:100%;height:46px;object-fit:contain;display:block;margin-bottom:3px}
+.mchip.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.stage{position:relative;flex:1 1 auto;min-height:0;background:#fff;border:1px solid var(--line);border-radius:22px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(ellipse at 50% 100%,#F1E4D6 0,#FBF7F2 60%,#fff 100%)}
+#cv{max-width:94%;max-height:92%;touch-action:manipulation;cursor:pointer;filter:drop-shadow(0 14px 12px rgba(90,50,20,.12))}
+.hint{position:absolute;left:0;right:0;top:8px;text-align:center;font-size:12px;font-weight:600;color:#7a6a5c;pointer-events:none;transition:opacity .4s}
+.badge{position:absolute;left:10px;bottom:8px;font-size:12px;font-weight:600;color:#5b4b3f;background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:12px;padding:4px 10px;max-width:calc(100% - 20px)}
+.load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:600;color:#7a6a5c;background:rgba(255,255,255,.7)}
+.pal{flex:none}
+.grp{display:flex;gap:6px;margin-bottom:6px}
+.grp button{height:28px;padding:0 12px;border-radius:14px;font-size:12px;font-weight:600;background:rgba(255,255,255,.6);border:1px solid var(--line)}
+.grp button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sw{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 6px;scrollbar-width:none}
+.sw::-webkit-scrollbar{display:none}
+.sw button{flex:none;width:50px;height:50px;border-radius:50%;background-size:cover;background-position:center;border:2px solid #fff;box-shadow:0 0 0 1px var(--line),0 2px 5px rgba(0,0,0,.14);position:relative}
+.sw button.fin{border-radius:14px}
+.sw button.on{box-shadow:0 0 0 2.5px var(--ink),0 2px 6px rgba(0,0,0,.2);transform:scale(1.06)}
+.selname{font-size:13px;font-weight:600;margin:2px 2px 6px;display:flex;justify-content:space-between;gap:8px}
+.selname span:last-child{font-weight:500;color:#8a7a6c}
+.acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.acts button{height:42px;border-radius:14px;background:#fff;border:1px solid var(--line);font-size:13px;font-weight:600}
+.acts button:active{transform:scale(.97)}
+.done{grid-column:1/4;background:var(--ink)!important;color:#fff;font-size:15px!important;border-color:var(--ink)!important;height:48px!important}
+/* результат */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(239,217,198,.7);backdrop-filter:blur(6px);z-index:5}
+.modal.on{display:flex}
+.card{width:100%;max-width:440px;max-height:100%;overflow:auto;background:var(--cream);border:1px solid var(--line);border-radius:22px;padding:16px;text-align:center;box-shadow:0 18px 50px rgba(80,40,10,.2)}
+.card img.res{width:100%;border-radius:14px;border:1px solid var(--line);display:block}
+.card h2{font-size:20px;margin:12px 0 4px}
+.card p{margin:0 0 10px;font-size:13.5px;line-height:1.4;color:#4a4a4a}
+.btn{display:block;width:100%;height:46px;line-height:46px;border-radius:14px;font-weight:600;font-size:15px;text-decoration:none;text-align:center;margin-top:8px}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.gh{border:1.5px solid var(--ink);color:var(--ink);background:transparent}
+.btn.ac{background:var(--accent);color:#fff}
+.promo{background:#fff;border:2px dashed var(--accent);border-radius:14px;padding:10px;margin:10px 0}
+.promo b{display:block;font-size:24px;letter-spacing:.08em;margin:2px 0 6px}
+.promo button{width:100%;height:36px;border-radius:10px;background:var(--accent);color:#fff;font-size:13px;font-weight:600}
+.note{font-size:11.5px;color:#7a7a7a;margin-top:8px}
+#toast{position:fixed;left:50%;top:16%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9}
+
+/* горизонтальный экран: сцена слева, панель справа */
+@media (orientation:landscape) and (max-height:600px){
+  #app{display:grid;grid-template-columns:minmax(0,1fr) 310px;grid-template-rows:auto auto 1fr;column-gap:10px;row-gap:6px;padding:calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 10px) calc(env(safe-area-inset-bottom) + 6px) calc(env(safe-area-inset-left) + 10px)}
+  .top{grid-column:1/3}
+  .stage{grid-column:1;grid-row:2/4}
+  .pick{grid-column:2;grid-row:2;gap:6px}
+  .tab{height:30px}
+  .side{grid-column:2;grid-row:3;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:auto}
+  .mchip{width:82px}.mchip canvas,.mchip img{height:36px}
+  .sw button{width:42px;height:42px}
+  .top img{height:30px}
+  .tool,.top .home{height:32px}.top .home{width:32px}
+  .acts button{height:36px}.done{height:40px!important;font-size:14px!important}
+  .modal .card{max-width:640px;display:grid;grid-template-columns:1fr 1fr;gap:0 14px;text-align:left;align-items:start}
+  .modal .card .left{grid-column:1}.modal .card .right{grid-column:2}
+}
+@media (orientation:portrait){ .side{display:contents} }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <a class="home" href="./" aria-label="Все игры">←</a>
+    <img src="assets/logo.svg" alt="CREATICA">
+    <div class="tools">
+      <button class="tool" id="undo" disabled>↩</button>
+    </div>
+  </div>
+  <div class="pick">
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-t="sofa">Диваны</button>
+      <button class="tab" data-t="chair">Кресла</button>
+    </div>
+    <div class="models" id="models"></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="hint" id="hint">Выбери ткань ниже и коснись части мебели</div>
+    <div class="badge" id="badge" style="display:none"></div>
+    <div class="load" id="load">Загрузка…</div>
+  </div>
+  <div class="side">
+    <div class="pal">
+      <div class="grp"><button class="on" data-g="fab">Ткани Creatica</button><button data-g="fin">Ножки и металл</button></div>
+      <div class="selname"><span id="selName">—</span><span id="selSub"></span></div>
+      <div class="sw" id="sw"></div>
+    </div>
+    <div class="acts">
+      <button id="rnd">🎲 Случайно</button>
+      <button id="all">🎨 Залить всё</button>
+      <button id="reset">✕ Сбросить</button>
+      <button class="done" id="done">Готово — показать результат</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="card">
+    <div class="left"><img class="res" id="resImg" alt="Ваш дизайн"></div>
+    <div class="right">
+      <h2 id="resTitle">Ваш дизайн готов</h2>
+      <p id="resText"></p>
+      <div id="resPromo"></div>
+      <a class="btn ac" id="shopBtn" href="https://creatica.shop" target="_blank" rel="noopener">Смотреть модель на сайте</a>
+      <button class="btn pri" id="saveBtn">Сохранить картинку</button>
+      <button class="btn gh" id="closeBtn">Продолжить раскрашивать</button>
+      <div class="note" id="resNote"></div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ============ НАСТРОЙКИ ============ */
+const CONFIG = {
+  reward: { enabled:true, minParts:3, off:3, code:'DESIGN3', note:'Промокод вводится в корзине на creatica.shop. Условия акции уточняйте на сайте. (Код-заглушка — замените на реальный.)' },
+  disclaimer: 'Цвета на экране могут отличаться от реальных образцов тканей.'
+};
+const MODELS = [
+  { id:'tokio',     t:'sofa',  name:'Диван ТОКИО',           url:'https://creatica.shop/catalog/pryamye_divany/divan_tokio/' },
+  { id:'corner',    t:'sofa',  name:'Диван ДИМЕНШН КОРНЕ',   url:'https://creatica.shop/catalog/uglovye_divany/divan_dimension_corne2/' },
+  { id:'nesta',     t:'sofa',  name:'Диван НЕСТА КОМФОРТ',   url:'https://creatica.shop/catalog/pryamye_divany/divan_nesta_comfort/' },
+  { id:'selection', t:'sofa',  name:'Диван СЕЛЕКШН',         url:'https://creatica.shop/catalog/pryamye_divany/divan_selection/' },
+  { id:'mami',      t:'chair', name:'Кресло МАМИ',           url:'https://creatica.shop/catalog/kresla/kreslo_mami_simple/' },
+  { id:'bon',       t:'chair', name:'Кресло БОН',            url:'https://creatica.shop/catalog/kresla/kreslo_bon/' },
+  { id:'bend',      t:'chair', name:'Кресло БЕНД',           url:'https://creatica.shop/catalog/kresla/kreslo_bend/' },
+  { id:'whooper',   t:'chair', name:'Кресло ВУПЕР',          url:'https://creatica.shop/catalog/kresla/kreslo_whooper/' }
+];
+/* ткани — настоящие образцы с creatica.shop (миниатюры в assets/fab). kind — тип фактуры */
+const FABRICS = [
+  {id:'bukle_white',n:'Букле Вайт',k:'boucle'}, {id:'box1',n:'Бокс 1',k:'waffle'}, {id:'hash000',n:'Хаш 000',k:'boucle'},
+  {id:'danko130',n:'Данко 130',k:'weave'}, {id:'veluto07',n:'Велутто 07',k:'velvet'}, {id:'piano02',n:'Пиано 02',k:'weave'},
+  {id:'furla290',n:'Фурла 290',k:'velvet'}, {id:'clarins100',n:'Клэринс 100',k:'boucle'}, {id:'avelina9811',n:'Авелина 9811',k:'velvet'},
+  {id:'veluto68',n:'Велутто 68',k:'velvet'}, {id:'hash617',n:'Хаш 617',k:'boucle'}, {id:'veluto69',n:'Велутто 69',k:'velvet'},
+  {id:'marbel105',n:'Марбел 105',k:'weave'}, {id:'monako16',n:'Монако 16',k:'mottled'}, {id:'ocean297',n:'Океан 297',k:'mottled'},
+  {id:'avelina9116',n:'Авелина 9116',k:'velvet'}, {id:'furla560',n:'Фурла 560',k:'velvet'}, {id:'happy237',n:'Хеппи 237',k:'weave'},
+  {id:'veluto62',n:'Велутто 62',k:'velvet'}, {id:'borabora08',n:'Бора-бора 08',k:'boucle'}, {id:'laura10',n:'Лаура 10',k:'weave'},
+  {id:'furla323',n:'Фурла 323',k:'velvet'}, {id:'manhetten17',n:'Манхеттан 17',k:'velvet'}
+];
+const FINISHES = [
+  {id:'oak',n:'Дуб',rgb:[196,150,98],k:'flat'}, {id:'walnut',n:'Орех',rgb:[104,70,50],k:'flat'}, {id:'black',n:'Чёрный металл',rgb:[38,38,42],k:'flat'},
+  {id:'brass',n:'Латунь',rgb:[201,162,74],k:'flat'}, {id:'graphite',n:'Графит',rgb:[84,86,92],k:'flat'}, {id:'white',n:'Белый',rgb:[236,234,228],k:'flat'}
+];
+
+const $ = id => document.getElementById(id);
+const cv = $('cv'), cx = cv.getContext('2d');
+const loadImg = (src,tries=4) => new Promise(res => { let n=0; const go=()=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>{ if(++n<tries) setTimeout(go,400*n); else res(null); }; im.src = n? src+'?r='+n : src; }; go(); });
+
+/* ---------- фактуры (тайлы 256x256, значения около 0) ---------- */
+const TEX = {}; const TS=256;
+function rng(seed){ let s=seed>>>0; return ()=> (s=(s*1664525+1013904223)>>>0)/4294967296; }
+function makeTex(kind){
+  const a=new Float32Array(TS*TS), r=rng(kind.length*977+13);
+  const blob=(cx0,cy0,rad,amp)=>{ for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++){ const d=Math.hypot(dx,dy); if(d>rad) continue; const x=(cx0+dx+TS)%TS,y=(cy0+dy+TS)%TS; a[y*TS+x]+=amp*(1-d/rad); } };
+  if(kind==='velvet'){ for(let i=0;i<TS*TS;i++) a[i]=(r()-.5)*.05; }
+  else if(kind==='weave'){ for(let y=0;y<TS;y++)for(let x=0;x<TS;x++){ const w=((x>>1)+(y>>1))&1; a[y*TS+x]=(w?.035:-.035)+(r()-.5)*.05; } }
+  else if(kind==='waffle'){ for(let y=0;y<TS;y++)for(let x=0;x<TS;x++){ const gx=x%8,gy=y%8; const v=(gx<6&&gy<6)?.04:-.08; a[y*TS+x]=v+(r()-.5)*.03; } }
+  else if(kind==='boucle'){ for(let i=0;i<2600;i++) blob((r()*TS)|0,(r()*TS)|0,3+((r()*4)|0),(r()-.35)*.10); for(let i=0;i<TS*TS;i++) a[i]+=(r()-.5)*.05; }
+  else if(kind==='mottled'){ for(let i=0;i<260;i++) blob((r()*TS)|0,(r()*TS)|0,10+((r()*22)|0),(r()-.5)*.11); for(let i=0;i<TS*TS;i++) a[i]+=(r()-.5)*.05; }
+  else { /* flat */ }
+  return a;
+}
+['velvet','weave','waffle','boucle','mottled','flat'].forEach(k=>TEX[k]=makeTex(k));
+
+/* ---------- состояние ---------- */
+let M=null;              // текущая модель: {W,H,base,label,regions}
+let sel=null;            // выбранный материал
+let cur=null;            // ImageData, что показываем
+let assign=[];           // region -> материал
+let undo=[];
+let modelIdx=0, group='fab';
+
+const fabById={}; FABRICS.forEach(f=>fabById[f.id]=f);
+
+/* ---------- сегментация «раскраски» ---------- */
+const BAR=132;
+function segment(img){
+  // обрезаем белые поля
+  const c0=document.createElement('canvas'); c0.width=img.width; c0.height=img.height; const x0=c0.getContext('2d',{willReadFrequently:true}); x0.drawImage(img,0,0);
+  const d0=x0.getImageData(0,0,c0.width,c0.height).data; let minX=c0.width,minY=c0.height,maxX=0,maxY=0;
+  for(let y=0;y<c0.height;y++)for(let x=0;x<c0.width;x++){ const i=(y*c0.width+x)*4; if(d0[i]<236||d0[i+1]<236||d0[i+2]<236){ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; } }
+  const pad=14; minX=Math.max(0,minX-pad); minY=Math.max(0,minY-pad); maxX=Math.min(c0.width-1,maxX+pad); maxY=Math.min(c0.height-1,maxY+pad);
+  const W=maxX-minX+1,H=maxY-minY+1;
+  const c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(c0,minX,minY,W,H,0,0,W,H);
+  const id=x.getImageData(0,0,W,H), d=id.data, N=W*H;
+  const L=new Float32Array(N); for(let i=0;i<N;i++) L[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+  // барьер = контуры; расширяем на 1px, чтобы закрыть щели
+  const bar=new Uint8Array(N); for(let i=0;i<N;i++) bar[i]=L[i]<BAR?1:0;
+  const bar2=new Uint8Array(bar);
+  for(let y=1;y<H-1;y++)for(let xx=1;xx<W-1;xx++){ const i=y*W+xx; if(bar[i]) continue; if(bar[i-1]||bar[i+1]||bar[i-W]||bar[i+W]) bar2[i]=2; }
+  // компоненты
+  const label=new Uint16Array(N); const stack=new Int32Array(N); let nl=0; const info=[null];
+  for(let s=0;s<N;s++){
+    if(bar2[s]||label[s]) continue;
+    nl++; let sp=0, cnt=0, border=false; stack[sp++]=s; label[s]=nl;
+    while(sp){ const p=stack[--sp]; cnt++; const px=p%W, py=(p/W)|0; if(px===0||py===0||px===W-1||py===H-1) border=true;
+      if(px>0){ const q=p-1; if(!bar2[q]&&!label[q]){label[q]=nl;stack[sp++]=q;} }
+      if(px<W-1){ const q=p+1; if(!bar2[q]&&!label[q]){label[q]=nl;stack[sp++]=q;} }
+      if(py>0){ const q=p-W; if(!bar2[q]&&!label[q]){label[q]=nl;stack[sp++]=q;} }
+      if(py<H-1){ const q=p+W; if(!bar2[q]&&!label[q]){label[q]=nl;stack[sp++]=q;} } }
+    info.push({cnt,border});
+  }
+  // фон и мелочь — не красим
+  const keep=new Uint16Array(nl+1); let nk=0; for(let l=1;l<=nl;l++){ if(!info[l].border && info[l].cnt>=260) keep[l]=++nk; }
+  const lab=new Uint16Array(N); for(let i=0;i<N;i++) lab[i]=label[i]?keep[label[i]]:0;
+  // кольцо вокруг контуров и мелкие «карманы» между обрывками линий отдаём соседним регионам (8 соседей, до 8 проходов)
+  const cand=new Uint8Array(N); for(let i=0;i<N;i++){ if(!lab[i]&&!bar[i]){ const l=label[i]; if(!l || !info[l].border) cand[i]=1; } }
+  for(let pass=0;pass<8;pass++){ const cp=new Uint16Array(lab); let ch=0;
+    for(let y=1;y<H-1;y++)for(let xx=1;xx<W-1;xx++){ const i=y*W+xx; if(!cand[i]||lab[i]) continue;
+      const v=cp[i-1]||cp[i+1]||cp[i-W]||cp[i+W]||cp[i-W-1]||cp[i-W+1]||cp[i+W-1]||cp[i+W+1]; if(v){ lab[i]=v; ch++; } }
+    if(!ch) break; }
+  // серые полупрозрачные края самих линий (L 60..131) тоже красим по соседнему региону — иначе на тёмных тканях они светятся
+  for(let pass=0;pass<2;pass++){ const cp=new Uint16Array(lab);
+    for(let y=1;y<H-1;y++)for(let xx=1;xx<W-1;xx++){ const i=y*W+xx; if(lab[i]||!bar[i]||L[i]<60) continue;
+      const v=cp[i-1]||cp[i+1]||cp[i-W]||cp[i+W]||cp[i-W-1]||cp[i-W+1]||cp[i+W-1]||cp[i+W+1]; if(v) lab[i]=v; } }
+  // белый фон вокруг мебели делаем прозрачным
+  const isBg=new Uint8Array(N); for(let i=0;i<N;i++){ const l=label[i]; if(l && info[l].border) isBg[i]=1; }
+  for(let i=0;i<N;i++){ let bgpix=isBg[i]; if(!bgpix && !lab[i] && !bar[i]){ const x1=i%W,y1=(i/W)|0; if(x1>0&&y1>0&&x1<W-1&&y1<H-1 && (isBg[i-1]||isBg[i+1]||isBg[i-W]||isBg[i+W])) bgpix=1; }
+    if(bgpix){ const v=L[i]; d[i*4+3]= v>=236?0 : Math.max(0,Math.min(255,(236-v)*255/70)); } }
+  // регионы
+  const cntR=new Int32Array(nk+1); for(let i=0;i<N;i++) if(lab[i]) cntR[lab[i]]++;
+  const regions=[null]; const lists=[null];
+  for(let r=1;r<=nk;r++){ regions.push({id:r,area:cntR[r],px:new Int32Array(cntR[r]),n:0,sumL:0,sx:0,sy:0}); }
+  for(let i=0;i<N;i++){ const r=lab[i]; if(!r) continue; const g=regions[r]; g.px[g.n++]=i; g.sumL+=L[i]; g.sx+=i%W; g.sy+=(i/W)|0; }
+  let total=0; for(let r=1;r<=nk;r++) total+=regions[r].area;
+  for(let r=1;r<=nk;r++){ const g=regions[r]; g.meanL=g.sumL/g.n; g.cx=g.sx/g.n; g.cy=g.sy/g.n; g.share=g.area/total; g.leg = g.meanL<190; }
+  return {W,H,base:d,id,L,label:lab,regions,nk};
+}
+
+/* ---------- покраска региона ---------- */
+function paintRegion(r,mat){
+  const g=M.regions[r], d=cur.data, b=M.base, W=M.W, tex=TEX[mat.k]||TEX.flat, [R,G,B]=mat.rgb, ml=g.meanL||200;
+  for(let j=0;j<g.n;j++){ const p=g.px[j], x=p%W, y=(p/W)|0;
+    let ratio=M.L[p]/ml; if(ratio<.42) ratio=.42; if(ratio>1.6) ratio=1.6;
+    const t=tex[(x&255)+((y&255)<<8)];
+    let k=ratio+t*(ratio>1?1:ratio);
+    let rr,gg,bb;
+    if(k<=1){ rr=R*k; gg=G*k; bb=B*k; } else { const u=Math.min(1,(k-1)*1.15); rr=R+(255-R)*u; gg=G+(255-G)*u; bb=B+(255-B)*u; }
+    const i=p*4; d[i]=rr; d[i+1]=gg; d[i+2]=bb; }
+}
+function restoreRegion(r){ const g=M.regions[r], d=cur.data, b=M.base; for(let j=0;j<g.n;j++){ const i=g.px[j]*4; d[i]=b[i]; d[i+1]=b[i+1]; d[i+2]=b[i+2]; } }
+function show(){ cx.putImageData(cur,0,0); }
+function applyMat(r,mat,rec=true){
+  if(rec) undo.push({r,prev:assign[r]||null});
+  assign[r]=mat; paintRegion(r,mat); show(); updateUI();
+}
+function undoLast(){ const u=undo.pop(); if(!u) return; if(u.prev){ assign[u.r]=u.prev; paintRegion(u.r,u.prev); } else { assign[u.r]=null; restoreRegion(u.r); } show(); updateUI(); }
+function resetAll(){ if(!M) return; cur.data.set(M.base); assign=[]; undo=[]; show(); updateUI(); }
+
+/* ---------- материалы ---------- */
+function avgColor(img){
+  const c=document.createElement('canvas'); c.width=c.height=48; const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(img,0,0,48,48);
+  const d=x.getImageData(10,10,28,28).data; let r=0,g=0,b=0,n=0; for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++; } return [r/n,g/n,b/n];
+}
+async function loadFabrics(){
+  await Promise.all(FABRICS.map(async f=>{ const im=await loadImg('assets/fab/'+f.id+'.webp'); f.rgb = im?avgColor(im):[200,190,180]; f.thumb='assets/fab/'+f.id+'.webp'; }));
+}
+function buildPalette(){
+  const box=$('sw'); box.innerHTML='';
+  const list = group==='fab'?FABRICS:FINISHES;
+  list.forEach(m=>{ const b=document.createElement('button'); b.title=m.n; b.dataset.id=m.id;
+    if(group==='fab') b.style.backgroundImage='url('+m.thumb+')'; else { b.className='fin'; b.style.background='rgb('+m.rgb.map(Math.round)+')'; }
+    b.onclick=()=>{ sel=m; syncSel(); }; box.appendChild(b); });
+  if(!sel || (group==='fab')!==!!sel.thumb) sel=list[0];
+  syncSel();
+}
+function syncSel(){
+  [...$('sw').children].forEach(b=>b.classList.toggle('on',sel&&b.dataset.id===sel.id));
+  $('selName').textContent = sel?sel.n:'—';
+  $('selSub').textContent = sel? (sel.thumb? 'ткань · '+({velvet:'велюр',weave:'рогожка',waffle:'вафельная',boucle:'букле',mottled:'бархат'}[sel.k]||''):'ножки / металл') : '';
+}
+
+/* ---------- модели и превью ---------- */
+async function loadModel(i){
+  modelIdx=i; $('load').style.display='flex'; $('load').textContent='Загрузка…';
+  const m=MODELS[i]; const img=await loadImg('assets/paint/'+m.id+'.webp');
+  if(!img){ $('load').innerHTML='Не загрузилось. <u>Повторить</u>'; $('load').onclick=()=>loadModel(i); return; }
+  M=segment(img); cv.width=M.W; cv.height=M.H; cur=new ImageData(new Uint8ClampedArray(M.base),M.W,M.H); assign=[]; undo=[]; show(); updateUI();
+  [...$('models').children].forEach((b,k)=>b.classList.toggle('on',MODELS[+b.dataset.i]===m));
+  $('load').style.display='none'; $('hint').style.opacity=1;
+  if(location.search.includes('debug')) debugRegions();
+}
+function debugRegions(){ const d=cur.data; for(let r=1;r<=M.nk;r++){ const g=M.regions[r]; const c=[(r*67)%200+40,(r*131)%200+40,(r*29)%200+40]; for(let j=0;j<g.n;j++){ const i=g.px[j]*4; d[i]=c[0]; d[i+1]=c[1]; d[i+2]=c[2]; } } show(); }
+function buildModels(){
+  const t=document.querySelector('.tab.on').dataset.t; const box=$('models'); box.innerHTML='';
+  MODELS.forEach((m,i)=>{ if(m.t!==t) return; const b=document.createElement('button'); b.className='mchip'; b.dataset.i=i;
+    b.innerHTML='<img src="assets/paint/'+m.id+'.webp" alt=""><span>'+m.name.replace(/^(Диван|Кресло) /,'')+'</span>'; b.onclick=()=>loadModel(i); box.appendChild(b); });
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t)); buildModels(); const first=MODELS.findIndex(m=>m.t===t.dataset.t); loadModel(first); });
+document.querySelectorAll('.grp button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.grp button').forEach(x=>x.classList.toggle('on',x===b)); group=b.dataset.g; buildPalette(); });
+
+/* ---------- касание ---------- */
+function regionAt(px,py){
+  const W=M.W,H=M.H; px=Math.round(px); py=Math.round(py);
+  for(let r=0;r<=14;r+=2){ let best=0,bd=1e9;
+    for(let dy=-r;dy<=r;dy+=2)for(let dx=-r;dx<=r;dx+=2){ const x=px+dx,y=py+dy; if(x<0||y<0||x>=W||y>=H) continue; const l=M.label[y*W+x]; if(l){ const d=dx*dx+dy*dy; if(d<bd){bd=d;best=l;} } }
+    if(best) return best; }
+  return 0;
+}
+cv.addEventListener('pointerdown',e=>{
+  if(!M||!sel) return; const rc=cv.getBoundingClientRect();
+  const r=regionAt((e.clientX-rc.left)/rc.width*M.W,(e.clientY-rc.top)/rc.height*M.H);
+  if(!r){ toast('Коснись самой мебели'); return; }
+  if(assign[r]===sel) return; applyMat(r,sel); $('hint').style.opacity=0;
+});
+
+/* ---------- кнопки ---------- */
+$('undo').onclick=undoLast; $('reset').onclick=resetAll;
+$('all').onclick=()=>{ if(!M||!sel) return; const upH = group==='fab';
+  for(let r=1;r<=M.nk;r++){ const g=M.regions[r]; if(upH? !g.leg : g.leg) { if(assign[r]!==sel){ undo.push({r,prev:assign[r]||null}); assign[r]=sel; paintRegion(r,sel); } } }
+  show(); updateUI(); $('hint').style.opacity=0; };
+$('rnd').onclick=()=>{ if(!M) return; undo=[];
+  const main=FABRICS[(Math.random()*FABRICS.length)|0]; let acc=main; while(acc===main) acc=FABRICS[(Math.random()*FABRICS.length)|0];
+  const fin=FINISHES[(Math.random()*FINISHES.length)|0];
+  for(let r=1;r<=M.nk;r++){ const g=M.regions[r]; const mat = g.leg? fin : (g.share<.09 && Math.random()<.75? acc : main); assign[r]=mat; paintRegion(r,mat); }
+  show(); updateUI(); $('hint').style.opacity=0; };
+function toast(s){ const t=$('toast'); t.textContent=s; t.style.opacity=1; clearTimeout(toast.t); toast.t=setTimeout(()=>t.style.opacity=0,1300); }
+
+function usedInfo(){
+  const fabs=new Map(), parts=[]; let up=0, legs=0;
+  for(let r=1;r<=(M?M.nk:0);r++){ const a=assign[r]; if(!a) continue; if(M.regions[r].leg) legs++; else up++; if(a.thumb) fabs.set(a.id,a); }
+  return {fabs:[...fabs.values()], up, legs};
+}
+function updateUI(){
+  $('undo').disabled=!undo.length;
+  const u=usedInfo(); const b=$('badge');
+  if(u.fabs.length){ b.style.display='block'; b.textContent=u.fabs.map(f=>f.n).join(' · '); } else b.style.display='none';
+}
+
+/* ---------- результат ---------- */
+let resBlob=null;
+async function makeResult(){
+  const S=1080, c=document.createElement('canvas'); c.width=c.height=S; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,S); g.addColorStop(0,'#FBF7F2'); g.addColorStop(1,'#F1E4D6'); x.fillStyle=g; x.fillRect(0,0,S,S);
+  const logo=await loadImg('assets/logo.svg'); if(logo){ const lh=110, lw=logo.width/logo.height*lh||lh*2.27; x.drawImage(logo,(S-lw)/2,26,lw,lh); }
+  const maxW=S*.86, maxH=S*.52, sc=Math.min(maxW/M.W,maxH/M.H), w=M.W*sc, h=M.H*sc;
+  const t=document.createElement('canvas'); t.width=M.W; t.height=M.H; t.getContext('2d').putImageData(cur,0,0);
+  x.save(); x.shadowColor='rgba(90,50,20,.18)'; x.shadowBlur=30; x.shadowOffsetY=18; x.drawImage(t,(S-w)/2,S*.2+(maxH-h)/2,w,h); x.restore();
+  const m=MODELS[modelIdx], u=usedInfo();
+  x.textAlign='center'; x.fillStyle='#141414'; x.font='700 46px Inter,Arial,sans-serif'; x.fillText(m.name,S/2,S*.76);
+  // образцы использованных тканей
+  const fs=u.fabs.slice(0,6); const r=42, gap=22; let tw=fs.length*(r*2)+(fs.length-1)*gap; let sx=(S-tw)/2+r;
+  for(const f of fs){ const im=await loadImg(f.thumb); x.save(); x.beginPath(); x.arc(sx,S*.83,r,0,7); x.clip(); if(im) x.drawImage(im,sx-r,S*.83-r,r*2,r*2); x.restore(); x.lineWidth=4; x.strokeStyle='#fff'; x.beginPath(); x.arc(sx,S*.83,r,0,7); x.stroke(); sx+=r*2+gap; }
+  x.font='500 30px Inter,Arial,sans-serif'; x.fillStyle='#5b4b3f'; x.fillText(fs.map(f=>f.n).join(' · ')||'Ваш дизайн',S/2,S*.92);
+  x.font='600 26px Inter,Arial,sans-serif'; x.fillStyle='#8a7a6c'; x.fillText('creatica.shop',S/2,S*.965);
+  return new Promise(res=>c.toBlob(b=>res({blob:b,url:c.toDataURL('image/png')}),'image/png'));
+}
+$('done').onclick=async ()=>{
+  if(!M) return; const u=usedInfo(); if(!u.up && !u.legs){ toast('Сначала покрась хотя бы одну часть'); return; }
+  const r=await makeResult(); resBlob=r.blob; $('resImg').src=r.url;
+  const m=MODELS[modelIdx]; $('shopBtn').href=m.url; $('shopBtn').textContent='Смотреть «'+m.name.replace(/^(Диван|Кресло) /,'')+'» на сайте';
+  $('resText').textContent = u.fabs.length? ('Ткани: '+u.fabs.map(f=>f.n).join(', ')+'.') : 'Отличное сочетание!';
+  let ph=''; const R=CONFIG.reward;
+  if(R.enabled){ if(u.up>=R.minParts) ph='<div class="promo">Ваша скидка −'+R.off+'%<b id="pcode">'+R.code+'</b><button id="pcopy">Скопировать промокод</button></div>'; else ph='<p>Покрась ещё '+(R.minParts-u.up)+' '+((R.minParts-u.up)===1?'часть':'части')+' — и получишь промокод на −'+R.off+'%</p>'; }
+  $('resPromo').innerHTML=ph; $('resNote').textContent = (ph.includes('promo')?R.note+' ':'')+CONFIG.disclaimer;
+  const pc=$('pcopy'); if(pc) pc.onclick=()=>{ const code=$('pcode').textContent; (navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).catch(()=>{ const ta=document.createElement('textarea'); ta.value=code; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch(e){} ta.remove(); }); pc.textContent='Скопировано ✓'; };
+  $('modal').classList.add('on');
+};
+$('closeBtn').onclick=()=>$('modal').classList.remove('on');
+$('saveBtn').onclick=async ()=>{
+  if(!resBlob) return; const file=new File([resBlob],'creatica-design.png',{type:'image/png'});
+  try{ if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Мой дизайн Creatica'}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(resBlob); a.download='creatica-design.png'; document.body.appendChild(a); a.click(); a.remove(); toast('Картинка сохранена');
+};
+
+/* ---------- старт ---------- */
+(async function init(){
+  await loadFabrics(); buildPalette(); buildModels(); await loadModel(0);
+})();
+</script>
+</body>
+</html>
