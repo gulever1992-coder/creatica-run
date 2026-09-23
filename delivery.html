@@ -431,7 +431,7 @@ const GLOW={}; function glowTex(c){ if(GLOW[c]) return GLOW[c]; const k=document
 let FOGD=ZFAR; let LOGO=null; { const im=new Image(); im.onload=()=>LOGO=im; im.src='assets/logo.svg'; }
 function render(){
   ENVN=state==='menu'?ENV[0]:envAt(); const E=ENVN; FOGD=ZFAR-1250*E.fog;
-  ctx.setTransform(DPR*RS,0,0,DPR*RS,0,0);
+  ctx.setTransform(DPR*RS,0,0,DPR*RS,0,0); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
   ctx.save(); if(shake>0) ctx.translate(rnd(-6,6)*shake*2,rnd(-6,6)*shake*2);
   drawWorld(E);
   const list=[];
@@ -485,7 +485,7 @@ function render(){
   ctx.font='800 19px Inter,Arial,sans-serif'; ctx.textAlign='center';
   for(const f of floats){ ctx.globalAlpha=Math.min(1,f.life*2); ctx.lineWidth=5; ctx.strokeStyle='#fff'; ctx.strokeText(f.s,f.x,f.y); ctx.fillStyle=f.s[0]==='−'?'#D9534F':f.s[0]==='В'?'#E07A1F':'#141414'; ctx.fillText(f.s,f.x,f.y); } ctx.globalAlpha=1;
   if(nitro>0){ const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.75); g.addColorStop(0,'rgba(80,170,255,0)'); g.addColorStop(1,'rgba(80,170,255,.28)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
-  if(state==='play'&&hp<=30){ const a=.18+.1*Math.sin(t*8); const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75); g.addColorStop(0,'rgba(217,83,79,0)'); g.addColorStop(1,'rgba(217,83,79,'+a+')'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+  if(state==='play'&&hp<=30){ const a=.2+.05*Math.sin(t*2.2); const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75); g.addColorStop(0,'rgba(217,83,79,0)'); g.addColorStop(1,'rgba(217,83,79,'+a+')'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
   ctx.restore();
 }
 function updateWeather(dt){
@@ -496,20 +496,25 @@ function updateWeather(dt){
 
 /* ---------- цикл / размер ---------- */
 function resize(){
-  const vv=window.visualViewport, w=Math.round(vv?vv.width:innerWidth), h=Math.round(vv?vv.height:innerHeight); DPR=Math.min(2,window.devicePixelRatio||1);
+  const vv=window.visualViewport, w=Math.round(vv?vv.width:innerWidth), h=Math.round(vv?vv.height:innerHeight); DPR=Math.min(2.5,window.devicePixelRatio||1);
   cv.width=Math.round(w*DPR*RS); cv.height=Math.round(h*DPR*RS); cv.style.width=w+'px'; cv.style.height=h+'px'; W=w; H=h;
   const land=w>h; LW=Math.min(W*.27,H*(land?.31:.27)); HOR=H*(land?.30:.31); YB=H*(land?.86:.84);
   if(!flakes.length){ for(let i=0;i<230;i++) flakes.push({x:Math.random()*W,y:Math.random()*H,r:rnd(1,2.6),v:rnd(30,90),a:rnd(.4,.95),p:Math.random()*100}); for(let i=0;i<120;i++) drops.push({x:Math.random()*(W+80),y:Math.random()*H,l:rnd(10,20),v:rnd(700,1000)}); }
-  if(state!=='play') render();
+  forceRender=true; if(state!=='play') render();
 }
 if(window.visualViewport) visualViewport.addEventListener('resize',resize); addEventListener('resize',resize); addEventListener('orientationchange',()=>setTimeout(resize,200));
 let last=0;
-let acc=0, ema=16.7, frameN=0;
+let acc=0, ema=16.7, frameN=0, lastRS=0, forceRender=false;
+function applyRS(){ cv.width=Math.round(W*DPR*RS); cv.height=Math.round(H*DPR*RS); forceRender=true; }
 function loop(ts){ const raw=(ts-last)||16.7; last=ts; const dt=Math.min(.1,raw/1000); let doRender=true;
+  if(++frameN%60===0){ const now=performance.now();
+    if(ema>38&&RS>.8&&now-lastRS>8000){ RS=Math.max(.8,RS-.1); applyRS(); lastRS=now; }          // только при сильных просадках (<26 к/с), не ниже 80%
+    else if(ema<19&&RS<1&&now-lastRS>30000){ RS=Math.min(1,RS+.1); applyRS(); lastRS=now; } }
   if(state==='play'){ acc+=dt; let n=0; while(acc>=1/60&&n<6){ update(1/60); acc-=1/60; n++; } if(n===6) acc=0; if(n===0) doRender=false; }
   else { dashOff=(dashOff+dt*380)%260; bob+=dt*10; if(state==='menu'){ scen.forEach(s=>s.z-=dt*380); spawnScenery(); scen=scen.filter(s=>s.z>-400); } }
+  if(forceRender){ doRender=true; forceRender=false; }
   updateWeather(dt); if(doRender) render();
-  ema=ema*.93+Math.min(raw,80)*.07; if(++frameN%45===0){ if(ema>25&&RS>.55){ RS=Math.max(.55,RS-.1); cv.width=Math.round(W*DPR*RS); cv.height=Math.round(H*DPR*RS); } else if(ema<15.5&&RS<1&&raw<20){ RS=Math.min(1,RS+.05); cv.width=Math.round(W*DPR*RS); cv.height=Math.round(H*DPR*RS); } }
+  ema=ema*.93+Math.min(raw,80)*.07;
   requestAnimationFrame(loop); }
 
 /* ---------- запуск ---------- */

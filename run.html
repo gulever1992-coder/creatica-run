@@ -533,7 +533,7 @@ function heroFrame(){
   return HERO.run[Math.floor(runAnim)%6];
 }
 function render(){
-  ctx.setTransform(DPR*S,0,0,DPR*S,0,0);
+  ctx.setTransform(DPR*S,0,0,DPR*S,0,0); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
   drawBackground();
   ctx.fillStyle='rgba(120,70,30,.10)';
   for(let i=0;i<8;i++){ const gx=((i*140-camX)%1120+1120)%1120-100; ctx.fillRect(gx,GY+18+(i%3)*22,60,3); }
@@ -582,21 +582,22 @@ function render(){
 
 /* ---------- цикл / размер ---------- */
 function resize(){
-  DPR=Math.min(2,window.devicePixelRatio||1);
+  DPR=Math.min(2.5,window.devicePixelRatio||1);
   const vv=window.visualViewport, w=Math.round(vv?vv.width:innerWidth), h=Math.round(vv?vv.height:innerHeight);
   cv.style.width=w+"px"; cv.style.height=h+"px";
   cv.width=Math.round(w*DPR); cv.height=Math.round(h*DPR);
   S=Math.min(w/300,h/340); W=w/S; H=h/S; GY=h>w?H*.80:H*.82;
-  P.x=W*.2; if(state!=='play') render();
+  P.x=W*.2; forceRender=true; if(state!=='play') render();
 }
 if(window.visualViewport) visualViewport.addEventListener('resize',resize);
 addEventListener('resize',resize); addEventListener('orientationchange',()=>setTimeout(resize,200));
 let last=0;
-let acc=0;
+let acc=0, forceRender=false;
 function loop(ts){
   const raw=(ts-last)||16.7; last=ts; const dt=Math.min(.1,raw/1000); let doRender=true;
   if(state==='play'){ acc+=dt; let n=0; while(acc>=1/60&&n<6){ update(1/60); acc-=1/60; n++; } if(n===6) acc=0; if(n===0) doRender=false; }   // фиксированный шаг: скорость игры не «проседает»
   else { camX+=dt*150; runAnim+=dt*13; }
+  if(forceRender){ doRender=true; forceRender=false; }
   if(doRender) render(); requestAnimationFrame(loop);
 }
 
