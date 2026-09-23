@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#F6EEE6">
 <title>Creatica Colors — раскрась мебель</title>
+<script src="tg.js"></script>
 <style>
 :root{--peach:#E9C9B1;--cream:#F7EFE6;--ink:#141414;--accent:#D9825B;--line:rgba(20,20,20,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
@@ -89,6 +90,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
     <a class="home" href="./" aria-label="Все игры">←</a>
     <img src="assets/logo.svg" alt="CREATICA">
     <div class="tools">
+      <button class="tool" id="mute" aria-label="Звук">🔊</button>
       <button class="tool" id="undo" disabled>↩</button>
     </div>
   </div>
@@ -404,6 +406,42 @@ $('saveBtn').onclick=async ()=>{
   try{ if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Мой дизайн Creatica'}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
   const a=document.createElement('a'); a.href=URL.createObjectURL(resBlob); a.download='creatica-design.png'; document.body.appendChild(a); a.click(); a.remove(); toast('Картинка сохранена');
 };
+
+/* ---------- спокойная музыка (генерируется в браузере) ---------- */
+let AC=null, MASTER=null, REV=null, calmOn=false, muted=false, nextChord=0, chordIdx=0, nextNote=0, lastN=4, calmTimer=null;
+try{ muted=localStorage.getItem('cr_mute')==='1'; }catch(e){}
+const mf=n=>440*Math.pow(2,(n-69)/12);
+const CHORDS=[[48,55,59,64,62],[45,52,55,59,60],[41,48,52,57,55],[43,50,52,57,59]];     // Cmaj9, Am9, Fmaj7, G6/9
+const PENTA=[60,62,64,67,69,72,74,76,79,81];                                         // до-мажорная пентатоника
+function impulse(sec,decay){ const n=Math.floor(AC.sampleRate*sec), b=AC.createBuffer(2,n,AC.sampleRate); for(let c=0;c<2;c++){ const d=b.getChannelData(c); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,decay); } return b; }
+function calmInit(){
+  MASTER=AC.createGain(); MASTER.gain.value=muted?0:.55; MASTER.connect(AC.destination);
+  const conv=AC.createConvolver(); conv.buffer=impulse(3.6,2.4); const wet=AC.createGain(); wet.gain.value=.6; conv.connect(wet).connect(MASTER);
+  REV=AC.createGain(); REV.connect(conv); const dry=AC.createGain(); dry.gain.value=.55; REV.connect(dry).connect(MASTER);
+  nextChord=AC.currentTime+.1; nextNote=AC.currentTime+2.2;
+  calmTimer=setInterval(calmTick,400);
+}
+function padVoice(f,t,dur){ const g=AC.createGain(), fl=AC.createBiquadFilter(); fl.type='lowpass'; fl.frequency.value=900; fl.Q.value=.4;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.045,t+3.2); g.gain.setValueAtTime(.045,t+dur-3.5); g.gain.linearRampToValueAtTime(0,t+dur);
+  for(const dt of [-6,5]){ const o=AC.createOscillator(); o.type='triangle'; o.frequency.value=f; o.detune.value=dt; o.connect(fl); o.start(t); o.stop(t+dur+.1); }
+  const lfo=AC.createOscillator(), lg=AC.createGain(); lfo.frequency.value=.15+Math.random()*.12; lg.gain.value=220; lfo.connect(lg).connect(fl.frequency); lfo.start(t); lfo.stop(t+dur+.1);
+  fl.connect(g).connect(REV); }
+function bell(f,t,vol){ const o=AC.createOscillator(), o2=AC.createOscillator(), g=AC.createGain(); o.type='sine'; o.frequency.value=f; o2.type='sine'; o2.frequency.value=f*2.005;
+  const g2=AC.createGain(); g2.gain.value=.16; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.012); g.gain.exponentialRampToValueAtTime(.0008,t+3.2);
+  o.connect(g); o2.connect(g2).connect(g); g.connect(REV); o.start(t); o2.start(t); o.stop(t+3.4); o2.stop(t+3.4); }
+function calmTick(){
+  const now=AC.currentTime;
+  while(nextChord<now+2){ const ch=CHORDS[chordIdx%CHORDS.length]; ch.forEach((n,i)=>padVoice(mf(n),nextChord+i*.25,10.5)); chordIdx++; nextChord+=8; }
+  while(nextNote<now+2){ lastN=Math.max(0,Math.min(PENTA.length-1,lastN+Math.round((Math.random()-.5)*4))); bell(mf(PENTA[lastN]),nextNote,.05+Math.random()*.04);
+    if(Math.random()<.22) bell(mf(PENTA[Math.min(PENTA.length-1,lastN+2)]),nextNote+.42,.03);
+    nextNote+=1.7+Math.random()*2.6; }
+}
+function calmStart(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; } calmInit(); } if(AC.state==='suspended') AC.resume(); }
+function syncMute(){ $('mute').textContent=muted?'🔇':'🔊'; if(MASTER) MASTER.gain.setTargetAtTime(muted?0:.55,AC.currentTime,.08); }
+$('mute').onclick=()=>{ calmStart(); muted=!muted; try{localStorage.setItem('cr_mute',muted?'1':'0')}catch(e){} syncMute(); };
+addEventListener('pointerdown',()=>calmStart(),{passive:true}); addEventListener('keydown',()=>calmStart());
+document.addEventListener('visibilitychange',()=>{ if(!AC) return; if(document.hidden) AC.suspend(); else if(!muted||true) AC.resume(); });
+$('mute').textContent=muted?'🔇':'🔊';
 
 /* ---------- старт ---------- */
 (async function init(){
