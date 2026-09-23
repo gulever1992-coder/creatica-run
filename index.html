@@ -173,7 +173,13 @@ const ASSET = {}, HERO = { run:[], jump:null, fall:null, rect:null };
 const files = ['box','vacuum','cat','blocks','coin','star','pillow','wetsign','plant','ball','drone','balloons','skate',
   'sofa_cream','sofa_blue','sofa_terracotta','sofa_n1','sofa_n2','sofa_n3','sofa_n4','sofa_n5','sofa_n6','sofa_n7','sofa_n8','sofa_n9','sofa_n10','sofa_n11','sofa_n12','armchair','arm1','arm2','arm3','arm4','arm5','arm6','arm7','arm8','pouf','chair_wing','chair_blue','bed','table_oval','dresser','stand','bench'];
 const heroFiles = ['hr1','hr2','hr3','hr4','hr5','hr6','hjump','hfall'];
-const loadImg = src => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+let READY=false, TOTAL=0, DONE=0, FAILED=0;
+function progress(){ DONE++; if(!READY){ const b=$("playBtn"); b.textContent="Загрузка… "+Math.min(99,Math.round(DONE/Math.max(1,TOTAL)*100))+"%"; } }
+// загрузка с повторами: на слабой мобильной сети картинка может упасть с первого раза
+const loadImg = (src,tries=4) => new Promise(res => { let n=0; const go=()=>{ const im=new Image();
+  im.onload=()=>{ progress(); res(im); };
+  im.onerror=()=>{ if(++n<tries) setTimeout(go,500*n); else { FAILED++; progress(); res(null); } };
+  im.src = n ? src+(src.includes("?")?"&":"?")+"r="+n : src; }; go(); });
 function pixels(img){ const c=document.createElement('canvas'); c.width=img.width; c.height=img.height; const x=c.getContext('2d'); x.drawImage(img,0,0); return {c,x,d:x.getImageData(0,0,c.width,c.height).data}; }
 function bbox(d,w,h){
   let x0=w,y0=h,x1=0,y1=0;
@@ -185,9 +191,10 @@ function trim(img){ const p=pixels(img); return crop(p.c,bbox(p.d,p.c.width,p.c.
 function mean(d,w,px,py){ const i=(py*w+px)*4; return 'rgb('+d[i]+','+d[i+1]+','+d[i+2]+')'; }
 
 async function loadAll(){
-  await Promise.all(files.map(async n => { const im = await loadImg('assets/'+n+'.png'); ASSET[n] = im ? trim(im) : null; }));
+  TOTAL=files.length+heroFiles.length+BGS.length+ART_N;
+  await Promise.all(files.map(async n => { const im = await loadImg('assets/'+n+'.webp'); ASSET[n] = im ? trim(im) : null; }));
   // герой: единая рамка для всех кадров, чтобы анимация не «прыгала»
-  const hi = await Promise.all(heroFiles.map(n => loadImg('assets/'+n+'.png')));
+  const hi = await Promise.all(heroFiles.map(n => loadImg('assets/'+n+'.webp')));
   const ps = hi.map(im => im ? pixels(im) : null);
   let x0=1e9,y0=1e9,x1=0,y1=0;
   ps.forEach(p => { if(!p) return; const b=bbox(p.d,p.c.width,p.c.height); x0=Math.min(x0,b.x0); y0=Math.min(y0,b.y0); x1=Math.max(x1,b.x0+b.w); y1=Math.max(y1,b.y0+b.h); });
@@ -377,7 +384,7 @@ function reset(){
   P.x=W*.2; P.y=0; P.vy=0; P.air=false; P.jumps=0;
   updateHud(true);
 }
-function start(){ audio(); newRoom(); reset(); state='play'; $('start').classList.remove('on'); $('over').classList.remove('on'); $('hud').style.display='block'; }
+function start(){ if(!READY) return; audio(); newRoom(); reset(); state='play'; $('start').classList.remove('on'); $('over').classList.remove('on'); $('hud').style.display='block'; }
 function hurt(){
   if(inv>0) return;
   if(shield){ shield=false; inv=1; SFX.shield(); toast('Подушка спасла!'); updateHud(); return; }
@@ -405,7 +412,7 @@ function finish(){
   const cb=$('copyBtn'); if(cb) cb.onclick=()=>{ const code=$('codeTxt').textContent; (navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).catch(()=>{ const ta=document.createElement('textarea'); ta.value=code; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch(e){} ta.remove(); }); cb.textContent='Скопировано ✓'; };
   setTimeout(()=>{ $('hud').style.display='none'; $('over').classList.add('on'); },650);
 }
-$('playBtn').onclick=start; $('againBtn').onclick=start;
+
 $('shopBtn').href=CONFIG.shopUrl;
 
 /* ---------- HUD ---------- */
@@ -589,7 +596,15 @@ $('bestNote').textContent = best?('Ваш рекорд: '+best):'';
 document.addEventListener('visibilitychange',()=>{ if(!AC) return; if(document.hidden) AC.suspend(); else AC.resume(); });
 document.addEventListener('gesturestart',e=>e.preventDefault());
 document.addEventListener('dblclick',e=>e.preventDefault());
-loadAll().then(()=>{ resize(); reset(); state='menu'; requestAnimationFrame(loop); });
+$("playBtn").disabled=true; $("playBtn").textContent="Загрузка… 0%";
+loadAll().then(()=>{
+  resize(); reset(); state="menu"; requestAnimationFrame(loop);
+  // критичные файлы: герой и хотя бы один фон; без них играть нельзя
+  const bad = FAILED>0 && (!HERO.run.every(Boolean) || !HERO.jump || !HERO.fall || !BGS.some(b=>b.img) || files.some(n=>!ASSET[n]));
+  const b=$("playBtn");
+  if(bad){ b.disabled=false; b.textContent="Не загрузилось — повторить"; b.onclick=()=>location.reload(); }
+  else { READY=true; b.disabled=false; b.textContent="Играть"; b.onclick=start; $("againBtn").onclick=start; }
+});
 </script>
 </body>
 </html>
