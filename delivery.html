@@ -12,7 +12,7 @@ html,body{margin:0;height:100%;height:100dvh;overflow:hidden;overscroll-behavior
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 14px 0;pointer-events:none;display:none}
 #hud .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.pill{background:rgba(255,255,255,.82);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:15px;letter-spacing:.02em}
+.pill{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:15px;letter-spacing:.02em}
 #score{font-size:22px;font-weight:700;padding:6px 16px}
 #hearts{font-size:20px;letter-spacing:2px;color:var(--accent)}
 #shield{display:none;font-size:13px}
@@ -21,7 +21,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 #meter .bar{height:8px;border-radius:99px;background:rgba(20,20,20,.1);overflow:hidden}
 #meter .fill{height:100%;width:0;background:linear-gradient(90deg,var(--peach),var(--accent));border-radius:99px;transition:width .15s}
 #mute{pointer-events:auto;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.82);font-size:17px;display:flex;align-items:center;justify-content:center}
-.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(239,217,198,.55);backdrop-filter:blur(5px)}
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(239,217,198,.86)}
 .screen.on{display:flex}
 .card{width:100%;max-width:400px;background:var(--cream);border:1px solid var(--line);border-radius:22px;padding:24px 22px;text-align:center;box-shadow:0 18px 50px rgba(80,40,10,.18);max-height:100%;overflow:auto}
 .logo{display:block;height:60px;margin:-6px auto -4px}
@@ -124,7 +124,7 @@ button,.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600
   <div class="card">
     <img class="logo" src="assets/logo.svg" alt="CREATICA">
     <h1>Довези мебель без царапин!</h1>
-    <p>Ты за рулём грузовика Creatica: проедь по Москве днём, на закате под дождём, ночью и в метель. Каждое столкновение — повреждённая мебель. Чем дольше едешь, тем быстрее и тем выше скидка.</p>
+    <p>Ты за рулём грузовика Creatica: проедь по Москве днём, на закате под дождём, ночью и в метель. Каждое столкновение — повреждённая мебель. Скорость растёт до 200 км/ч: чем дольше едешь, тем выше скидка.</p>
     <div class="how">
       <div><b>☝ Веди пальцем</b>Грузовик едет за пальцем. Коснись нужной полосы — он перестроится</div>
       <div><b>🛋 Береги груз</b>Удар снижает шкалу мебели, на 0% доставка сорвана</div>
@@ -158,22 +158,22 @@ const CONFIG = {
   promoNote: 'Промокод вводится в корзине на creatica.shop. Условия акции уточняйте на сайте.',
   // points — сколько очков нужно набрать, code — промокод (заменить на реальные!)
   tiers: [
-    { points: 1200,  off: 3,  code: 'DRIVE3'  },
-    { points: 3000,  off: 5,  code: 'DRIVE5'  },
-    { points: 5000,  off: 7,  code: 'DRIVE7'  },
-    { points: 7000,  off: 10, code: 'DRIVE10' },
-    { points: 11000, off: 15, code: 'DRIVE15' }
+    { points: 1300,  off: 3,  code: 'DRIVE3'  },
+    { points: 3100,  off: 5,  code: 'DRIVE5'  },
+    { points: 5100,  off: 7,  code: 'DRIVE7'  },
+    { points: 7200,  off: 10, code: 'DRIVE10' },
+    { points: 11500, off: 15, code: 'DRIVE15' }
   ],
   // скорость в единицах мира в секунду (км/ч на табло = скорость / 9.5)
-  speed0: 620, speedGain: 11, speedMax: 1500,
+  speed0: 620, speedGain: 13, speedMax: 1900,
   nitroSec: 5, coinPts: 100
 };
 /* =================================================== */
 
 const $ = id => document.getElementById(id);
 const cv = $('c'), ctx = cv.getContext('2d');
-let DPR = 1, W = 400, H = 800, LW = 100, HOR = 260, YB = 660;   // размеры, ширина полосы, горизонт, линия грузовика
-const F = 520, ZFAR = 2700;                                       // перспектива и дальность
+let RS = 1, DPR = 1, W = 400, H = 800, LW = 100, HOR = 260, YB = 660;   // размеры, ширина полосы, горизонт, линия грузовика
+const F = 520, ZFAR = 3200, NITRO_MUL = 1.25;                                       // перспектива и дальность
 
 /* ---------- ассеты ---------- */
 const ASSET = {};
@@ -201,7 +201,8 @@ let AC=null, muted=false; try{ muted=localStorage.getItem('cr_mute')==='1'; }cat
 const MUS={on:false,step:0,next:0,master:null};
 function audio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); if(AC&&!MUS.on) musicStart(); }
 function beep(f1,f2,dur,type='sine',vol=.12){ if(muted||!AC) return; const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(); o.type=type; o.frequency.setValueAtTime(f1,t); o.frequency.exponentialRampToValueAtTime(f2,t+dur); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t+dur); }
-function noiseB(t,dur,vol,hp,dest){ const n=AC.sampleRate*dur|0,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; const s=AC.createBufferSource(); s.buffer=b; const f=AC.createBiquadFilter(); f.type='highpass'; f.frequency.value=hp; const g=AC.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0008,t+dur); s.connect(f).connect(g).connect(dest); s.start(t); }
+let NBUF=null;
+function noiseB(t,dur,vol,hp,dest){ if(!NBUF){ NBUF=AC.createBuffer(1,AC.sampleRate,AC.sampleRate); const d=NBUF.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; } const s=AC.createBufferSource(); s.buffer=NBUF; const f=AC.createBiquadFilter(); f.type='highpass'; f.frequency.value=hp; const g=AC.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0008,t+dur); s.connect(f).connect(g).connect(dest); s.start(t,Math.random()*.4,dur); }
 const SFX={ lane:()=>beep(260,420,.09,'triangle',.06), coin:()=>beep(900,1350,.09,'square',.05), kit:()=>{beep(500,1000,.25,'triangle',.1);setTimeout(()=>beep(800,1500,.2,'triangle',.1),120)},
   hit:()=>{beep(150,40,.35,'sawtooth',.16); if(AC&&!muted) noiseB(AC.currentTime,.25,.12,300,AC.destination);}, tier:()=>{beep(520,1040,.2,'triangle',.12);setTimeout(()=>beep(780,1560,.25,'triangle',.12),140)}, over:()=>beep(300,70,.6,'sawtooth',.14),
   nitro:()=>{beep(200,900,.5,'sawtooth',.1); if(AC&&!muted) noiseB(AC.currentTime,.4,.1,600,AC.destination);}, shield:()=>{beep(600,1200,.18,'triangle',.1);setTimeout(()=>beep(900,1800,.2,'triangle',.1),90)}, smash:()=>{beep(220,60,.2,'square',.1); if(AC&&!muted) noiseB(AC.currentTime,.18,.13,400,AC.destination);}, pop:()=>beep(700,200,.25,'triangle',.12), near:()=>beep(500,760,.07,'square',.04) };
@@ -345,24 +346,25 @@ function floatText(x,y,s){ floats.push({x,y,s,life:1}); }
 
 /* ---------- HUD ---------- */
 const hc={};
+function setFill(p){ const v=Math.round(p*2)/2; if(hc.fill!==v){ hc.fill=v; $('mFill').style.width=v+'%'; } }
 function updateHud(force){
   const sc=Math.floor(score), ti=tierFor(sc); const set=(id,v)=>{ if(force||hc[id]!==v){ hc[id]=v; $(id).textContent=v; } };
   set('score',sc); set('hpTxt',Math.round(hp)+'%');
-  const f=$('hpFill'); f.style.width=Math.max(0,hp)+'%'; f.style.background=hp>60?'#4CAF7A':hp>30?'#E8A33D':'#D9534F';
+  if(force||hc.hp!==Math.round(hp)){ hc.hp=Math.round(hp); const f=$('hpFill'); f.style.width=Math.max(0,hp)+'%'; f.style.background=hp>60?'#4CAF7A':hp>30?'#E8A33D':'#D9534F'; }
   const cur=ti>=0?CONFIG.tiers[ti]:null, nx=CONFIG.tiers[ti+1];
   set('mLeft',cur?`Скидка −${cur.off}%`:'Скидка: наберите очки');
-  if(nx){ const from=cur?cur.points:0; set('mRight',`−${nx.off}% с ${nx.points}`); $('mFill').style.width=Math.min(100,(sc-from)/(nx.points-from)*100)+'%'; } else { set('mRight','МАКС'); $('mFill').style.width='100%'; }
+  if(nx){ const from=cur?cur.points:0; set('mRight',`−${nx.off}% с ${nx.points}`); setFill(Math.min(100,(sc-from)/(nx.points-from)*100)); } else { set('mRight','МАКС'); setFill(100); }
   if(ti!==tierIdx){ if(ti>tierIdx&&ti>=0){ SFX.tier(); toast('Скидка −'+CONFIG.tiers[ti].off+'%!'); } tierIdx=ti; }
 }
 function syncPw(){ const s=(nitro>0?'⚡ Нитро '+nitro.toFixed(1)+' ':'')+(shield?'🛡 Щит':''); const el=$('pw'); if(hc.pw!==s){ hc.pw=s; el.textContent=s; el.style.display=s?'block':'none'; } }
-function updateInfo(){ const zi=Math.floor(t/32)%ZONES.length; const s='📍 '+ZONES[zi][0]+' · '+Math.round(speed*sm*(nitro>0?1.45:1)/9.5)+' км/ч'; if(hc.info!==s){ hc.info=s; $('info').textContent=s; } }
+function updateInfo(){ const zi=Math.floor(t/32)%ZONES.length; const s='📍 '+ZONES[zi][0]+' · '+Math.round(speed*sm*(nitro>0?NITRO_MUL:1)/9.5)+' км/ч'; if(hc.info!==s){ hc.info=s; $('info').textContent=s; } }
 
 /* ---------- обновление ---------- */
 function camOf(){ return (lane-1.5)*.32; }
 function update(dt){
   t+=dt; speed=Math.min(CONFIG.speedMax,CONFIG.speed0+t*CONFIG.speedGain); sm+=(1-sm)*Math.min(1,dt*1.3);
   if(nitro>0){ nitro-=dt; if(nitro<=0){ nitro=0; toast('Нитро закончилось'); } }
-  const v=speed*sm*(nitro>0?1.45:1), dz=v*dt;
+  const v=speed*sm*(nitro>0?NITRO_MUL:1), dz=v*dt;
   nmCool-=dt; z0+=dz; score+=dz/120*(nitro>0?2:1); dashOff=(dashOff+dz)%260; if(inv>0) inv-=dt; if(shake>0) shake-=dt; bob+=dt*(8+v/80);
   { const d=target-lane, mv=clamp(d*9*dt,-5.2*dt,5.2*dt); lane+=mv; steerV=mv/dt; }
   const zi=Math.floor(t/32)%ZONES.length; if(zi!==lastZone){ prevZone=lastZone; zoneFade=0; lastZone=zi; toast('📍 '+ZONES[zi][0]+' · '+ZONES[zi][2]); }
@@ -425,10 +427,11 @@ function sprite(name,lat,z,w,alpha){
   const a=(alpha===undefined?1:alpha)*clamp((FOGD-z)/700,0,1); if(a<=.01) return null;
   ctx.globalAlpha=a; ctx.drawImage(im,x-width/2,y-h,width,h); ctx.globalAlpha=1; return {x,y,width,h,p};
 }
+const GLOW={}; function glowTex(c){ if(GLOW[c]) return GLOW[c]; const k=document.createElement('canvas'); k.width=k.height=64; const g=k.getContext('2d'), rg=g.createRadialGradient(32,32,0,32,32,32); rg.addColorStop(0,'rgba('+c+',1)'); rg.addColorStop(1,'rgba('+c+',0)'); g.fillStyle=rg; g.fillRect(0,0,64,64); return GLOW[c]=k; }
 let FOGD=ZFAR; let LOGO=null; { const im=new Image(); im.onload=()=>LOGO=im; im.src='assets/logo.svg'; }
 function render(){
   ENVN=state==='menu'?ENV[0]:envAt(); const E=ENVN; FOGD=ZFAR-1250*E.fog;
-  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.setTransform(DPR*RS,0,0,DPR*RS,0,0);
   ctx.save(); if(shake>0) ctx.translate(rnd(-6,6)*shake*2,rnd(-6,6)*shake*2);
   drawWorld(E);
   const list=[];
@@ -462,24 +465,22 @@ function render(){
   }
   if(!playerDrawn) drawPlayer();
   // ---- освещение суток ----
-  if(E.dark>.01||E.tint>.01){ ctx.globalCompositeOperation='multiply';
-    if(E.tint>.01){ ctx.fillStyle='rgba(255,'+Math.round(255-95*E.tint)+','+Math.round(255-160*E.tint)+',1)'; ctx.fillRect(0,0,W,H); }
-    if(E.dark>.01){ const d=E.dark; ctx.fillStyle='rgb('+Math.round(255-(255-38)*d)+','+Math.round(255-(255-52)*d)+','+Math.round(255-(255-108)*d)+')'; ctx.fillRect(0,0,W,H); }
-    ctx.globalCompositeOperation='source-over'; }
+  if(E.tint>.01){ ctx.fillStyle='rgba(255,140,60,'+(E.tint*.30)+')'; ctx.fillRect(0,0,W,H); }
+  if(E.dark>.01){ ctx.fillStyle='rgba(16,26,70,'+(E.dark*.74)+')'; ctx.fillRect(0,0,W,H); }
   if(E.lamp>.02||lights.length){ ctx.globalCompositeOperation='lighter';
     if(E.lamp>.02){ // мягкое свечение фар на дороге перед грузовиком
-      const tx=px(); ctx.save(); ctx.translate(tx,YB-LW*1.15); ctx.scale(1,.42); const rg=ctx.createRadialGradient(0,0,0,0,0,LW*1.5); rg.addColorStop(0,'rgba(255,236,190,'+.32*E.lamp+')'); rg.addColorStop(1,'rgba(255,236,190,0)'); ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(0,0,LW*1.5,0,7); ctx.fill(); ctx.restore(); }
-    for(const l of lights){ if(l.c===undefined&&E.lamp<.05) continue; const a=(l.c===undefined?E.lamp*.85:l.a*(E.lamp>.3||l.c?1:.6)); const gr=ctx.createRadialGradient(l.x,l.y,0,l.x,l.y,Math.max(4,l.r)); const c=l.c||'255,214,140'; gr.addColorStop(0,'rgba('+c+','+a+')'); gr.addColorStop(1,'rgba('+c+',0)'); ctx.fillStyle=gr; ctx.fillRect(l.x-l.r,l.y-l.r,l.r*2,l.r*2); }
+      const tx=px(); ctx.save(); ctx.translate(tx,YB-LW*1.15); ctx.scale(1,.42); ctx.globalAlpha=.32*E.lamp; ctx.drawImage(glowTex('255,236,190'),-LW*1.5,-LW*1.5,LW*3,LW*3); ctx.restore(); ctx.globalAlpha=1; }
+    for(const l of lights){ if(l.c===undefined&&E.lamp<.05) continue; const a=(l.c===undefined?E.lamp*.85:l.a*(E.lamp>.3||l.c?1:.6)); const rr=Math.max(4,l.r); ctx.globalAlpha=Math.min(1,a); ctx.drawImage(glowTex(l.c||'255,214,140'),l.x-rr,l.y-rr,rr*2,rr*2); } ctx.globalAlpha=1;
     ctx.globalCompositeOperation='source-over'; }
   // частицы, текст
   for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life/p.max); ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill(); } ctx.globalAlpha=1;
   // осадки: снег, метель, дождь
-  const ns=Math.min(flakes.length,Math.round(70*E.snow)); ctx.fillStyle='rgba(255,255,255,.92)'; for(let i=0;i<ns;i++){ const f=flakes[i]; ctx.globalAlpha=f.a; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*(E.snow>2?1.2:1),0,7); ctx.fill(); } ctx.globalAlpha=1;
+  const ns=Math.min(flakes.length,Math.round(70*E.snow)); ctx.fillStyle='rgba(255,255,255,.92)'; for(let i=0;i<ns;i++){ const f=flakes[i]; ctx.globalAlpha=f.a; const q=f.r*(E.snow>2?2.4:2); ctx.fillRect(f.x,f.y,q,q); } ctx.globalAlpha=1;
   const nd=Math.round(drops.length*E.rain); if(nd>0){ ctx.strokeStyle='rgba(210,225,245,.55)'; ctx.lineWidth=1.3; ctx.beginPath(); for(let i=0;i<nd;i++){ const d=drops[i]; ctx.moveTo(d.x,d.y); ctx.lineTo(d.x-3,d.y+d.l); } ctx.stroke(); }
   // туман и метель
   if(E.fog>.02){ const gf=ctx.createLinearGradient(0,HOR-140,0,H*.8); gf.addColorStop(0,'rgba(236,240,245,0)'); gf.addColorStop(.3,'rgba(236,240,245,'+E.fog*.85+')'); gf.addColorStop(1,'rgba(236,240,245,0)'); ctx.fillStyle=gf; ctx.fillRect(0,HOR-140,W,H*.8-HOR+140); }
   // линии скорости
-  const v=speed*sm*(nitro>0?1.45:1); if(state==='play'&&(v>760||nitro>0)){ const n=nitro>0?22:12, a=nitro>0?.35:.16; ctx.strokeStyle=nitro>0?'rgba(150,210,255,'+a+')':'rgba(255,255,255,'+a+')'; ctx.lineWidth=nitro>0?2:1.4; ctx.beginPath();
+  const v=speed*sm*(nitro>0?NITRO_MUL:1); if(state==='play'&&(v>900||nitro>0)){ const n=nitro>0?22:12, a=nitro>0?.35:.16; ctx.strokeStyle=nitro>0?'rgba(150,210,255,'+a+')':'rgba(255,255,255,'+a+')'; ctx.lineWidth=nitro>0?2:1.4; ctx.beginPath();
     for(let i=0;i<n;i++){ const k=((t*(nitro>0?2.6:1.6)+i*.618)%1), ang=(i*2.399)%6.283, side=Math.cos(ang)>0?1:-1; const r0=lerp(.15,1,k*k), r1=r0+.09+.12*k; const cx=W/2,cy=HOR+(YB-HOR)*.1, dx=Math.cos(ang), dy=Math.abs(Math.sin(ang))*.6+.15; const L0=Math.max(W,H)*r0, L1=Math.max(W,H)*r1; ctx.moveTo(cx+dx*L0,cy+dy*L0); ctx.lineTo(cx+dx*L1,cy+dy*L1); } ctx.stroke(); }
   ctx.font='800 19px Inter,Arial,sans-serif'; ctx.textAlign='center';
   for(const f of floats){ ctx.globalAlpha=Math.min(1,f.life*2); ctx.lineWidth=5; ctx.strokeStyle='#fff'; ctx.strokeText(f.s,f.x,f.y); ctx.fillStyle=f.s[0]==='−'?'#D9534F':f.s[0]==='В'?'#E07A1F':'#141414'; ctx.fillText(f.s,f.x,f.y); } ctx.globalAlpha=1;
@@ -495,17 +496,21 @@ function updateWeather(dt){
 
 /* ---------- цикл / размер ---------- */
 function resize(){
-  const vv=window.visualViewport, w=Math.round(vv?vv.width:innerWidth), h=Math.round(vv?vv.height:innerHeight); DPR=Math.min(2.5,window.devicePixelRatio||1);
-  cv.width=Math.round(w*DPR); cv.height=Math.round(h*DPR); cv.style.width=w+'px'; cv.style.height=h+'px'; W=w; H=h;
+  const vv=window.visualViewport, w=Math.round(vv?vv.width:innerWidth), h=Math.round(vv?vv.height:innerHeight); DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(w*DPR*RS); cv.height=Math.round(h*DPR*RS); cv.style.width=w+'px'; cv.style.height=h+'px'; W=w; H=h;
   const land=w>h; LW=Math.min(W*.27,H*(land?.31:.27)); HOR=H*(land?.30:.31); YB=H*(land?.86:.84);
   if(!flakes.length){ for(let i=0;i<230;i++) flakes.push({x:Math.random()*W,y:Math.random()*H,r:rnd(1,2.6),v:rnd(30,90),a:rnd(.4,.95),p:Math.random()*100}); for(let i=0;i<120;i++) drops.push({x:Math.random()*(W+80),y:Math.random()*H,l:rnd(10,20),v:rnd(700,1000)}); }
   if(state!=='play') render();
 }
 if(window.visualViewport) visualViewport.addEventListener('resize',resize); addEventListener('resize',resize); addEventListener('orientationchange',()=>setTimeout(resize,200));
 let last=0;
-function loop(ts){ const dt=Math.min(.033,(ts-last)/1000||0); last=ts;
-  if(state==='play') update(dt); else { dashOff=(dashOff+dt*380)%260; bob+=dt*10; if(state==='menu'){ scen.forEach(s=>s.z-=dt*380); spawnScenery(); scen=scen.filter(s=>s.z>-400); } }
-  updateWeather(dt); render(); requestAnimationFrame(loop); }
+let acc=0, ema=16.7, frameN=0;
+function loop(ts){ const raw=(ts-last)||16.7; last=ts; const dt=Math.min(.1,raw/1000); let doRender=true;
+  if(state==='play'){ acc+=dt; let n=0; while(acc>=1/60&&n<6){ update(1/60); acc-=1/60; n++; } if(n===6) acc=0; if(n===0) doRender=false; }
+  else { dashOff=(dashOff+dt*380)%260; bob+=dt*10; if(state==='menu'){ scen.forEach(s=>s.z-=dt*380); spawnScenery(); scen=scen.filter(s=>s.z>-400); } }
+  updateWeather(dt); if(doRender) render();
+  ema=ema*.93+Math.min(raw,80)*.07; if(++frameN%45===0){ if(ema>25&&RS>.55){ RS=Math.max(.55,RS-.1); cv.width=Math.round(W*DPR*RS); cv.height=Math.round(H*DPR*RS); } else if(ema<15.5&&RS<1&&raw<20){ RS=Math.min(1,RS+.05); cv.width=Math.round(W*DPR*RS); cv.height=Math.round(H*DPR*RS); } }
+  requestAnimationFrame(loop); }
 
 /* ---------- запуск ---------- */
 $('tiersList').innerHTML=CONFIG.tiers.map(t=>`<span>${t.points} оч → −${t.off}%</span>`).join('');

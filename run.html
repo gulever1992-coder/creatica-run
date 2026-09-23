@@ -12,7 +12,7 @@ html,body{margin:0;height:100%;height:100dvh;overflow:hidden;overscroll-behavior
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 14px 0;pointer-events:none;display:none}
 #hud .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.pill{background:rgba(255,255,255,.82);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:15px;letter-spacing:.02em}
+.pill{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:15px;letter-spacing:.02em}
 #score{font-size:22px;font-weight:700;padding:6px 16px}
 #hearts{font-size:20px;letter-spacing:2px;color:var(--accent)}
 #shield{display:none;font-size:13px}
@@ -21,7 +21,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 #meter .bar{height:8px;border-radius:99px;background:rgba(20,20,20,.1);overflow:hidden}
 #meter .fill{height:100%;width:0;background:linear-gradient(90deg,var(--peach),var(--accent));border-radius:99px;transition:width .15s}
 #mute{pointer-events:auto;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.82);font-size:17px;display:flex;align-items:center;justify-content:center}
-.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(239,217,198,.55);backdrop-filter:blur(5px)}
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(239,217,198,.86)}
 .screen.on{display:flex}
 .card{width:100%;max-width:400px;background:var(--cream);border:1px solid var(--line);border-radius:22px;padding:24px 22px;text-align:center;box-shadow:0 18px 50px rgba(80,40,10,.18);max-height:100%;overflow:auto}
 .logo{display:block;height:60px;margin:-6px auto -4px}
@@ -238,9 +238,10 @@ const CH = [ [57,60,64,67], [53,57,60,64], [48,52,55,59], [55,59,62,65] ];      
 const BASS = [45,41,36,43], mf=n=>440*Math.pow(2,(n-69)/12);
 function tone(f,t,dur,type,vol,dest){ const o=AC.createOscillator(), g=AC.createGain(); o.type=type; o.frequency.value=f;
   g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.02); g.gain.exponentialRampToValueAtTime(.0008,t+dur); o.connect(g).connect(dest); o.start(t); o.stop(t+dur+.05); }
-function noise(t,dur,vol,hp,dest){ const n=AC.sampleRate*dur|0, b=AC.createBuffer(1,n,AC.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
-  const s=AC.createBufferSource(); s.buffer=b; const f=AC.createBiquadFilter(); f.type="highpass"; f.frequency.value=hp; const g=AC.createGain();
-  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0008,t+dur); s.connect(f).connect(g).connect(dest); s.start(t); }
+let NBUF=null;
+function noise(t,dur,vol,hp,dest){ if(!NBUF){ NBUF=AC.createBuffer(1,AC.sampleRate,AC.sampleRate); const dd=NBUF.getChannelData(0); for(let i=0;i<dd.length;i++) dd[i]=Math.random()*2-1; }
+  const s=AC.createBufferSource(); s.buffer=NBUF; const f=AC.createBiquadFilter(); f.type="highpass"; f.frequency.value=hp; const g=AC.createGain();
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0008,t+dur); s.connect(f).connect(g).connect(dest); s.start(t,Math.random()*.4,dur); }
 function musicStep(){
   const bpm = 100 + (state==="play" ? Math.min(28, (speed-CONFIG.speed0)/12) : 0), sd=60/bpm/2;
   while(MUS.next < AC.currentTime+.25){
@@ -423,6 +424,7 @@ $('shopBtn').href=CONFIG.shopUrl;
 
 /* ---------- HUD ---------- */
 let hudCache={};
+function setFill(p){ const v=Math.round(p*2)/2; if(hudCache.fill!==v){ hudCache.fill=v; document.getElementById('mFill').style.width=v+'%'; } }
 function updateHud(force){
   const sc=Math.floor(score), ti=tierFor(sc);
   const set=(id,v)=>{ if(force||hudCache[id]!==v){ hudCache[id]=v; $(id).textContent=v; } };
@@ -430,8 +432,8 @@ function updateHud(force){
   $('shield').style.display=shield?'block':'none';
   const cur = ti>=0?CONFIG.tiers[ti]:null, nx=CONFIG.tiers[ti+1];
   set('mLeft', cur?`Скидка −${cur.off}%`:'Скидка: наберите очки');
-  if(nx){ const from=cur?cur.points:0; set('mRight',`−${nx.off}% с ${nx.points}`); $('mFill').style.width=Math.min(100,(sc-from)/(nx.points-from)*100)+'%'; }
-  else { set('mRight','МАКС'); $('mFill').style.width='100%'; }
+  if(nx){ const from=cur?cur.points:0; set('mRight',`−${nx.off}% с ${nx.points}`); setFill(Math.min(100,(sc-from)/(nx.points-from)*100)); }
+  else { set('mRight','МАКС'); setFill(100); }
   if(ti!==tierIdx){ if(ti>tierIdx && ti>=0){ SFX.tier(); toast('Скидка −'+CONFIG.tiers[ti].off+'%!'); } tierIdx=ti; }
 }
 
@@ -580,7 +582,7 @@ function render(){
 
 /* ---------- цикл / размер ---------- */
 function resize(){
-  DPR=Math.min(2.5,window.devicePixelRatio||1);
+  DPR=Math.min(2,window.devicePixelRatio||1);
   const vv=window.visualViewport, w=Math.round(vv?vv.width:innerWidth), h=Math.round(vv?vv.height:innerHeight);
   cv.style.width=w+"px"; cv.style.height=h+"px";
   cv.width=Math.round(w*DPR); cv.height=Math.round(h*DPR);
@@ -590,11 +592,12 @@ function resize(){
 if(window.visualViewport) visualViewport.addEventListener('resize',resize);
 addEventListener('resize',resize); addEventListener('orientationchange',()=>setTimeout(resize,200));
 let last=0;
+let acc=0;
 function loop(ts){
-  const dt=Math.min(.033,(ts-last)/1000||0); last=ts;
-  if(state==='play') update(dt);
+  const raw=(ts-last)||16.7; last=ts; const dt=Math.min(.1,raw/1000); let doRender=true;
+  if(state==='play'){ acc+=dt; let n=0; while(acc>=1/60&&n<6){ update(1/60); acc-=1/60; n++; } if(n===6) acc=0; if(n===0) doRender=false; }   // фиксированный шаг: скорость игры не «проседает»
   else { camX+=dt*150; runAnim+=dt*13; }
-  render(); requestAnimationFrame(loop);
+  if(doRender) render(); requestAnimationFrame(loop);
 }
 
 /* ---------- запуск ---------- */
