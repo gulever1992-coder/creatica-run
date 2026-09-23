@@ -119,7 +119,7 @@ button,.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:600
       <div><b>👆 Тап — прыжок</b>Тап в воздухе — двойной прыжок</div>
       <div><b>🛋 Мебель — платформы</b>Диваны, кресла, комоды: запрыгивай сверху</div>
       <div><b>🚁 Летающие — не прыгай!</b>Дроны и шарики: пробегай снизу</div>
-      <div><b>♥♥ Две жизни</b>Подушка-щит спасёт от удара</div>
+      <div><b>♥♥♥ Три жизни</b>+1 жизнь за 45 с без ударов. Подушка спасёт от удара</div>
     </div>
     <div class="tiers" id="tiersList"></div>
     <button class="primary" id="playBtn">Играть</button>
@@ -148,15 +148,15 @@ const CONFIG = {
   promoNote: 'Промокод вводится в корзине на creatica.shop. Условия акции уточняйте на сайте.',
   // points — сколько очков нужно набрать, code — промокод (заменить на реальные!)
   tiers: [
-    { points: 800,   off: 3,  code: 'RUN3'  },
-    { points: 1800,  off: 5,  code: 'RUN5'  },
-    { points: 3200,  off: 7,  code: 'RUN7'  },
-    { points: 5000,  off: 10, code: 'RUN10' },
-    { points: 8000, off: 15, code: 'RUN15' }
+    { points: 1700,  off: 3,  code: 'RUN3'  },
+    { points: 3800,  off: 5,  code: 'RUN5'  },
+    { points: 6000,  off: 7,  code: 'RUN7'  },
+    { points: 8500,  off: 10, code: 'RUN10' },
+    { points: 13500, off: 15, code: 'RUN15' }
   ],
-  lives: 2,
+  lives: 3,
   // сложность: стартовая скорость, прирост в сек, максимум (единиц мира в секунду)
-  speed0: 250, speedGain: 2.9, speedMax: 520
+  speed0: 270, speedGain: 4.0, speedMax: 560, regenSec: 45
 };
 /* =================================================== */
 
@@ -270,6 +270,7 @@ const SFX = {
 /* ---------- состояние ---------- */
 const P = { x:0, y:0, vy:0, w:38, h:80, air:true, jumps:0 };
 let state='menu', camX=0, dist=0, t=0, speed=0, score=0, lives=2, shield=false, inv=0;
+let regenT=0;
 let obs=[], items=[], parts=[], floats=[], nextX=0, shake=0, tierIdx=-1, lastLevel=0, runAnim=0, lastFrame=-1;
 let bgIdx = (Math.random()*BGS.length)|0, artSeed = 1;
 let best = 0; try{ best = +localStorage.getItem('cr_best')||0; }catch(e){}
@@ -278,7 +279,7 @@ const GRAV=2300, JUMP1=640, JUMP2=600;
 
 /* типы: hurt — вредные, plat — платформы (стоять сверху), air — летающие (не прыгай!) */
 const TYPES = {
-  box:{img:'box',h:50,kind:'hurt'}, cat:{img:'cat',h:56,kind:'hurt'}, wetsign:{img:'wetsign',h:62,kind:'hurt'}, plant:{img:'plant',h:92,kind:'hurt'},
+  box:{img:'box',h:50,kind:'hurt'}, cat:{img:'cat',h:56,kind:'hurt'}, wetsign:{img:'wetsign',h:62,kind:'hurt'}, plant:{img:'plant',h:74,kind:'hurt'},
   blocks:{img:'blocks',h:108,kind:'hurt'},
   vacuum:{img:'vacuum',h:30,kind:'hurt',move:70}, ball:{img:'ball',h:46,kind:'hurt',move:110}, skate:{img:'skate',h:24,kind:'hurt',move:150},
   drone:{img:'drone',h:52,kind:'air',bottom:92,move:40}, balloons:{img:'balloons',h:80,kind:'air',bottom:90},
@@ -302,8 +303,8 @@ function mkItem(kind,x,y){ items.push({kind,x,y,r:15,ph:Math.random()*6}); }
 /* ---------- паттерны ---------- */
 const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[(Math.random()*a.length)|0];
 const level=()=>Math.min(1,t/110);
-function coinRow(x,y,n,gap=34){ for(let i=0;i<n;i++) mkItem('coin',x+i*gap,y); }
-function coinArc(x,n,peak,gap=34){ for(let i=0;i<n;i++){ const k=n===1?.5:i/(n-1); mkItem('coin',x+i*gap,18+Math.sin(k*Math.PI)*peak); } }
+function coinRow(x,y,n,gap=34){ if(Math.random()<.4) mkItem('coin',x+(n-1)*gap/2,y); }   // одна редкая монета вместо шлейфа
+function coinArc(x,n,peak,gap=34){ if(Math.random()<.4) mkItem('coin',x+(n-1)*gap/2,18+peak); }
 
 function spawn(){
   const L=level(), x=nextX; let width=60;
@@ -353,7 +354,7 @@ function spawn(){
 
   if(Math.random()<.05) mkItem('pillow', x+width+50, 60);
   else if(Math.random()<.06) mkItem('star', x+width*.5, 190);
-  nextX = x + width + speed*rnd(.6,.95)*(1-.32*L) + 50;
+  nextX = x + width + speed*rnd(.7,1.05)*(1-.26*L) + 50;
 }
 
 /* ---------- управление ---------- */
@@ -384,7 +385,7 @@ function newRoom(){
   bgIdx=n; artSeed=1+((Math.random()*9999)|0);
 }
 function reset(){
-  camX=0; dist=0; t=0; speed=CONFIG.speed0; score=0; lives=CONFIG.lives; shield=false; inv=0; tierIdx=-1; lastLevel=0;
+  camX=0; dist=0; t=0; speed=CONFIG.speed0; score=0; lives=CONFIG.lives; shield=false; inv=0; tierIdx=-1; lastLevel=0; regenT=0;
   obs=[]; items=[]; parts=[]; floats=[]; nextX=W*1.1; shake=0;
   P.x=W*.2; P.y=0; P.vy=0; P.air=false; P.jumps=0;
   updateHud(true);
@@ -393,7 +394,7 @@ function start(){ if(!READY) return; audio(); newRoom(); reset(); state='play'; 
 function hurt(){
   if(inv>0) return;
   if(shield){ shield=false; inv=1; SFX.shield(); toast('Подушка спасла!'); updateHud(); return; }
-  lives--; inv=1.3; shake=.35; SFX.hit(); P.vy=380; P.air=true; P.jumps=1;
+  lives--; regenT=0; inv=1.3; shake=.35; SFX.hit(); P.vy=380; P.air=true; P.jumps=1;
   updateHud();
   if(lives<=0) finish();
 }
@@ -442,6 +443,7 @@ function update(dt){
   if(inv>0) inv-=dt; if(shake>0) shake-=dt;
   runAnim+=dt*(9+speed/45);
 
+  regenT+=dt; if(regenT>=CONFIG.regenSec){ regenT=0; if(lives<CONFIG.lives){ lives++; toast('❤ +1 жизнь'); SFX.shield(); updateHud(); } }
   const Lv=Math.floor(t/15); if(Lv>lastLevel){ lastLevel=Lv; toast('Быстрее!'); }
   while(nextX<camX+W+300) spawn();
 
@@ -477,8 +479,8 @@ function update(dt){
     if(sx<-60){ items.splice(i,1); continue; }
     if(Math.abs(sx-cx)<P.w*.5+it.r && Math.abs(it.y-cy)<P.h*.5+it.r){
       items.splice(i,1);
-      if(it.kind==='coin'){ score+=5; SFX.coin(); sparkle(sx,it.y,'#F2A27E'); floatText(sx,it.y+20,'+5'); }
-      else if(it.kind==='star'){ score+=30; SFX.star(); sparkle(sx,it.y,'#FFD23F'); floatText(sx,it.y+20,'+30'); toast('Бонус!'); }
+      if(it.kind==='coin'){ score+=50; SFX.coin(); sparkle(sx,it.y,'#F2A27E'); floatText(sx,it.y+20,'+50'); }
+      else if(it.kind==='star'){ score+=150; SFX.star(); sparkle(sx,it.y,'#FFD23F'); floatText(sx,it.y+20,'+150'); toast('Бонус!'); }
       else if(it.kind==='pillow'){ shield=true; SFX.shield(); sparkle(sx,it.y,'#fff'); toast('Подушка-щит!'); }
     }
   }

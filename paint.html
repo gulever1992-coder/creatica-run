@@ -139,7 +139,10 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 <script>
 /* ============ НАСТРОЙКИ ============ */
 const CONFIG = {
-  reward: { enabled:true, minParts:3, off:3, code:'DESIGN3', note:'Промокод вводится в корзине на creatica.shop. Условия акции уточняйте на сайте. (Код-заглушка — замените на реальный.)' },
+  // дизайн засчитывается, если ВРУЧНУЮ покрашено минимум minParts частей обивки минимум minFabrics разными тканями (кнопки «Случайно» и «Залить всё» не считаются).
+  // Скидка растёт по числу РАЗНЫХ моделей, оформленных таким образом (повтор той же модели не считается).
+  reward: { enabled:true, minParts:5, minFabrics:3, note:'Промокод вводится в корзине на creatica.shop. Условия акции уточняйте на сайте.',
+    tiers:[ {n:1,off:3,code:'COLOR3'}, {n:2,off:5,code:'COLOR5'}, {n:3,off:7,code:'COLOR7'}, {n:4,off:10,code:'COLOR10'}, {n:6,off:15,code:'COLOR15'} ] },
   disclaimer: 'Цвета на экране могут отличаться от реальных образцов тканей.'
 };
 const MODELS = [
@@ -194,6 +197,7 @@ let sel=null;            // выбранный материал
 let cur=null;            // ImageData, что показываем
 let assign=[];           // region -> материал
 let undo=[];
+let manual={};           // регион -> материал, покрашенный вручную касанием
 let modelIdx=0, group='fab';
 
 const fabById={}; FABRICS.forEach(f=>fabById[f.id]=f);
@@ -301,7 +305,7 @@ async function loadModel(i){
   modelIdx=i; $('load').style.display='flex'; $('load').textContent='Загрузка…';
   const m=MODELS[i]; const img=await loadImg('assets/paint/'+m.id+'.webp');
   if(!img){ $('load').innerHTML='Не загрузилось. <u>Повторить</u>'; $('load').onclick=()=>loadModel(i); return; }
-  M=segment(img); cv.width=M.W; cv.height=M.H; cur=new ImageData(new Uint8ClampedArray(M.base),M.W,M.H); assign=[]; undo=[]; show(); updateUI();
+  M=segment(img); cv.width=M.W; cv.height=M.H; cur=new ImageData(new Uint8ClampedArray(M.base),M.W,M.H); assign=[]; undo=[]; manual={}; show(); updateUI();
   [...$('models').children].forEach((b,k)=>b.classList.toggle('on',MODELS[+b.dataset.i]===m));
   $('load').style.display='none'; $('hint').style.opacity=1;
   if(location.search.includes('debug')) debugRegions();
@@ -327,7 +331,7 @@ cv.addEventListener('pointerdown',e=>{
   if(!M||!sel) return; const rc=cv.getBoundingClientRect();
   const r=regionAt((e.clientX-rc.left)/rc.width*M.W,(e.clientY-rc.top)/rc.height*M.H);
   if(!r){ toast('Коснись самой мебели'); return; }
-  if(assign[r]===sel) return; applyMat(r,sel); $('hint').style.opacity=0;
+  if(assign[r]===sel) return; applyMat(r,sel); manual[r]=sel; $('hint').style.opacity=0;
 });
 
 /* ---------- кнопки ---------- */
@@ -373,13 +377,24 @@ async function makeResult(){
 }
 $('done').onclick=async ()=>{
   if(!M) return; const u=usedInfo(); if(!u.up && !u.legs){ toast('Сначала покрась хотя бы одну часть'); return; }
-  try{ localStorage.setItem('cc_done',(+localStorage.getItem('cc_done')||0)+1); }catch(e){}
   const r=await makeResult(); resBlob=r.blob; $('resImg').src=r.url;
   const m=MODELS[modelIdx]; $('shopBtn').href=m.url; $('shopBtn').textContent='Смотреть «'+m.name.replace(/^(Диван|Кресло) /,'')+'» на сайте';
   $('resText').textContent = u.fabs.length? ('Ткани: '+u.fabs.map(f=>f.n).join(', ')+'.') : 'Отличное сочетание!';
   let ph=''; const R=CONFIG.reward;
-  if(R.enabled){ if(u.up>=R.minParts) ph='<div class="promo">Ваша скидка −'+R.off+'%<b id="pcode">'+R.code+'</b><button id="pcopy">Скопировать промокод</button></div>'; else ph='<p>Покрась ещё '+(R.minParts-u.up)+' '+((R.minParts-u.up)===1?'часть':'части')+' — и получишь промокод на −'+R.off+'%</p>'; }
-  $('resPromo').innerHTML=ph; $('resNote').textContent = (ph.includes('promo')?R.note+' ':'')+CONFIG.disclaimer;
+  if(R.enabled){
+    let done=[]; try{ done=JSON.parse(localStorage.getItem('cc_models')||'[]'); }catch(e){}
+    const upCount=M.regions.slice(1).filter(g=>!g.leg).length, need=Math.min(R.minParts,upCount), needF=Math.min(R.minFabrics,need);
+    const mr=Object.keys(manual).map(Number).filter(r=>M.regions[r]&&!M.regions[r].leg&&manual[r].thumb), mf=new Set(mr.map(r=>manual[r].id));
+    const qualifies=mr.length>=need && mf.size>=needF;
+    let msg='';
+    if(qualifies && !done.includes(m.id)){ done.push(m.id); try{ localStorage.setItem('cc_models',JSON.stringify(done)); localStorage.setItem('cc_done',String(done.length)); }catch(e){} msg='Дизайн засчитан! '; }
+    else if(qualifies) msg='Эта модель уже засчитана — попробуй другую. ';
+    else msg='Чтобы дизайн засчитался, покрась вручную минимум '+need+' частей обивки (сейчас '+mr.length+') минимум '+needF+' разными тканями (сейчас '+mf.size+'). ';
+    const n=done.length; let cur=null,nx=null; R.tiers.forEach(t=>{ if(n>=t.n) cur=t; }); nx=R.tiers.find(t=>n<t.n);
+    if(cur) ph+='<div class="promo">Ваша скидка −'+cur.off+'%<b id="pcode">'+cur.code+'</b><button id="pcopy">Скопировать промокод</button></div>';
+    ph+='<p>'+msg+(nx?'Засчитано моделей: '+n+'. Ещё '+(nx.n-n)+' новых — и скидка станет −'+nx.off+'%.':'Максимальная скидка! Вы — дизайнер Creatica 🏆')+'</p>';
+  }
+  $('resPromo').innerHTML=ph; $('resNote').textContent = (ph.includes('class="promo"')?R.note+' ':'')+CONFIG.disclaimer;
   const pc=$('pcopy'); if(pc) pc.onclick=()=>{ const code=$('pcode').textContent; (navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).catch(()=>{ const ta=document.createElement('textarea'); ta.value=code; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch(e){} ta.remove(); }); pc.textContent='Скопировано ✓'; };
   $('modal').classList.add('on');
 };
