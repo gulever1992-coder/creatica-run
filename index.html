@@ -10,7 +10,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%;background:#F6EEE6;color:var(--ink);font-family:"Hoves","Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 body{padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 24px)}
-.wrap{max-width:760px;margin:0 auto}
+.wrap{max-width:1040px;margin:0 auto}
 header{text-align:center;padding:6px 0 14px}
 header img{height:64px;display:block;margin:0 auto -6px}
 h1{font-size:28px;line-height:1.12;margin:10px 0 6px;letter-spacing:-.01em}
@@ -42,19 +42,30 @@ header p{margin:0 auto;max-width:440px;font-size:15px;line-height:1.4;color:#4a4
 .a-col .f2{left:68%;bottom:12px;height:112px}
 .a-col .sw{position:absolute;right:12px;top:12px;display:flex;gap:6px;z-index:2}
 .a-col .sw i{display:block;width:30px;height:30px;border-radius:50%;background-size:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+/* превью «Delivery» */
+.a-del{background:linear-gradient(#BFD6E8,#EAF0F4 46%,#E4EAF0 46%)}
+.a-del .sky{left:50%;transform:translateX(-50%);top:34px;width:78%}
+.a-del .road{position:absolute;left:0;right:0;bottom:0;height:56%;background:linear-gradient(#8B9199,#4a4e55);clip-path:polygon(43% 0,57% 0,98% 100%,2% 100%)}
+.a-del .dash{position:absolute;left:49.2%;width:1.6%;bottom:0;height:56%;background:repeating-linear-gradient(#fff 0 10px,transparent 10px 22px);clip-path:polygon(35% 0,65% 0,100% 100%,0 100%)}
+.a-del .taxi{left:58%;bottom:44px;height:44px}
+.a-del .truck{left:calc(50% - 44px);bottom:6px;height:92px}
+.a-del .coin{left:22%;bottom:52px;height:32px}
+.a-del .lamp{left:6%;bottom:30px;height:84px}
 footer{margin-top:22px;text-align:center;font-size:13px;color:#7a6a5c;line-height:1.5}
 footer a{color:var(--ink);font-weight:700}
 
 @media (min-width:640px){ .grid{grid-template-columns:1fr 1fr} .art{height:190px} }
+@media (min-width:980px){ .grid{grid-template-columns:1fr 1fr 1fr} }
 @media (orientation:landscape) and (max-height:600px){
   body{padding-top:calc(env(safe-area-inset-top) + 8px)}
   header{padding:0 0 6px} header img{height:44px;margin-bottom:-4px} h1{font-size:20px;margin:4px 0 2px} header p{font-size:13px;max-width:none}
   .wrap{max-width:none;padding:0 calc(env(safe-area-inset-right) + 6px) 0 calc(env(safe-area-inset-left) + 6px)}
-  .grid{grid-template-columns:1fr 1fr;gap:12px}
+  .grid{grid-template-columns:1fr 1fr 1fr;gap:10px}
   .art{height:112px} .body{padding:10px 14px 14px} .body h2{font-size:17px;margin-bottom:3px} .body p{font-size:12.5px;margin-bottom:8px}
   .perks{display:none} .go{height:40px;font-size:14px}
   .a-run .hero{height:82px}.a-run .sofa{height:48px}.a-run .box{height:42px}.a-run .c1,.a-run .c2,.a-run .c3{height:22px;bottom:78px}.a-run .c2{bottom:90px}
   .a-col .f1{height:62px}.a-col .f2{height:84px}.a-col .sw i{width:22px;height:22px}
+  .a-del .truck{height:66px;left:calc(50% - 32px)}.a-del .taxi{height:32px;bottom:32px}.a-del .coin{height:24px}.a-del .lamp{height:60px}
   footer{margin-top:10px;font-size:11.5px}
 }
 </style>
@@ -97,6 +108,24 @@ footer a{color:var(--ink);font-weight:700}
         <p>Раскрась диван или кресло настоящими тканями Creatica: выбери модель, ткань для каждой части и ножки.</p>
         <div class="perks"><span>8 моделей</span><span>23 ткани</span><span>промокод за дизайн</span></div>
         <div class="go">Раскрашивать →</div>
+      </div>
+    </a>
+
+    <a class="game" href="delivery.html">
+      <div class="art a-del">
+        <span class="tag">Гонка</span>
+        <img class="sky" src="assets/d_k_kremlin.webp" alt="">
+        <div class="road"></div><div class="dash"></div>
+        <img class="lamp" src="assets/d_s_lamp.webp" alt="">
+        <img class="coin" src="assets/d_h_gcoin.webp" alt="">
+        <img class="taxi" src="assets/d_v_taxi.webp" alt="">
+        <img class="truck" src="assets/d_truck.webp" alt="">
+      </div>
+      <div class="body">
+        <h2>Creatica Delivery</h2>
+        <p>Ты за рулём грузовика Creatica: 4 полосы Москвы, пробки и препятствия. Береги мебель — каждый удар снижает шкалу.</p>
+        <div class="perks"><span>Москва</span><span>4 полосы</span><span>до −15%</span></div>
+        <div class="go">Ехать →</div>
       </div>
     </a>
   </div>
